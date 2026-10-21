@@ -1,0 +1,15 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "ftk-athletics",
+  "account_id": "7d98873a0cad80eac7396fff6ec2808a",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-10-21",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "observability": {
+    "enabled": true
+  }
+}

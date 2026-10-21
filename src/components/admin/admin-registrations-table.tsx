@@ -64,6 +64,7 @@ export function AdminRegistrationsTable({ rows }: { rows: AdminRegistrationRow[]
   const [paymentStatus, setPaymentStatus] = useState("all");
   const [cancellationStatus, setCancellationStatus] = useState<CancellationFilter>("all");
   const [detailsRow, setDetailsRow] = useState<AdminRegistrationRow | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   const programOptions = useMemo(
     () => Array.from(new Set(rows.map((r) => r.programName))).sort(),
@@ -94,6 +95,35 @@ export function AdminRegistrationsTable({ rows }: { rows: AdminRegistrationRow[]
     const query = params.toString();
     return query ? `/api/admin/export?${query}` : "/api/admin/export";
   }, [search, program, paymentStatus, cancellationStatus]);
+
+  /**
+   * Fetches and saves the file via blob instead of a plain `<a href>`
+   * navigation. On the Cloudflare Workers deployment, a top-level document
+   * navigation to this route intermittently returns 503 (the static-assets
+   * layer appears to intercept navigation requests ahead of the Worker) even
+   * though the exact same request succeeds every time as a same-page fetch.
+   * This sidesteps that — and works identically on any host.
+   */
+  async function handleExport() {
+    setIsExporting(true);
+    try {
+      const res = await fetch(exportHref);
+      if (!res.ok) throw new Error(`Export failed (${res.status})`);
+      const blob = await res.blob();
+      const match = res.headers.get("Content-Disposition")?.match(/filename="([^"]+)"/);
+      const filename = match?.[1] ?? "ftk-registrations.xlsx";
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      window.alert("Export failed. Please try again.");
+    } finally {
+      setIsExporting(false);
+    }
+  }
 
   return (
     <div>
@@ -156,13 +186,15 @@ export function AdminRegistrationsTable({ rows }: { rows: AdminRegistrationRow[]
           </Select>
         </div>
 
-        <a
-          href={exportHref}
-          className="inline-flex h-10 w-fit shrink-0 items-center gap-2 rounded-sm bg-carolina px-5 font-heading text-sm uppercase text-navy transition-colors hover:bg-carolina/90"
+        <button
+          type="button"
+          onClick={handleExport}
+          disabled={isExporting}
+          className="inline-flex h-10 w-fit shrink-0 items-center gap-2 rounded-sm bg-carolina px-5 font-heading text-sm uppercase text-navy transition-colors hover:bg-carolina/90 disabled:opacity-60"
         >
           <Download className="size-4" aria-hidden />
-          Export To Excel
-        </a>
+          {isExporting ? "Exporting…" : "Export To Excel"}
+        </button>
       </div>
 
       <p className="mt-3 text-xs text-muted-foreground">

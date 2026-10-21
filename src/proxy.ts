@@ -36,6 +36,19 @@ export async function proxy(request: NextRequest) {
   return response;
 }
 
+/**
+ * Excludes, in addition to the existing static-asset exclusions, routes that
+ * never render user/session-specific UI: the marketing pages, program
+ * listings, schedule, and the Stripe webhook (machine-to-machine,
+ * signature-verified, never has a user session). Skipping the middleware on
+ * these lets Cloudflare serve them as static assets or plain Worker
+ * responses without the per-request session-refresh round trip — the
+ * client-side Supabase client still refreshes its own session as needed, so
+ * auth correctness on session-aware routes (auth/profile/register/admin/
+ * other API routes) is unaffected.
+ */
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon\\.ico|programs(?:/.*)?$|schedule$|robots\\.txt$|sitemap\\.xml$|api/webhooks/stripe$|$|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+  ],
 };

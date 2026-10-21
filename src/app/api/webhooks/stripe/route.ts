@@ -90,7 +90,11 @@ export async function POST(request: NextRequest) {
 
   let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(rawBody, signature, process.env.STRIPE_WEBHOOK_SECRET!);
+    // constructEventAsync (not constructEvent): Cloudflare Workers only
+    // expose crypto via the async SubtleCrypto API, so the sync verifier
+    // throws there. Async works identically on Node, so this is safe
+    // regardless of host.
+    event = await stripe.webhooks.constructEventAsync(rawBody, signature, process.env.STRIPE_WEBHOOK_SECRET!);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Invalid signature.";
     console.error("stripe webhook: signature verification failed", message);
