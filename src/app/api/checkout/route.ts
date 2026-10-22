@@ -106,19 +106,31 @@ export async function POST(request: NextRequest) {
   // Idempotency guard: a double-click or page reload shouldn't open a second
   // Stripe Checkout Session (and risk a double charge) for the same
   // registrations while an earlier one is still awaiting payment — reuse it.
-  const { data: reusablePayment, error: reusableError } = await admin
+  // Must match the registration set EXACTLY. `.contains` alone only proves
+  // the stored set is a superset of what was requested — e.g. an unpaid
+  // $180 session originally covering two registrations would otherwise get
+  // reused (and its full $180 charged) when the user asks to pay for just
+  // one of them at $60. The `.contains` call below is kept as a cheap
+  // index-assisted pre-filter; the actual reuse decision is the exact-size
+  // match below it.
+  const { data: reuseCandidates, error: reusableError } = await admin
     .from("payments")
-    .select("id, stripe_session_id")
+    .select("id, stripe_session_id, registration_ids")
     .eq("status", "pending")
     .contains("registration_ids", registrationIds)
     .not("stripe_session_id", "is", null)
     .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .limit(20);
   if (reusableError) {
     console.error("checkout: reusable-payment lookup failed", reusableError);
     return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });
   }
+  const requestedIdSet = new Set(registrationIds);
+  const reusablePayment = reuseCandidates?.find(
+    (p) =>
+      p.registration_ids.length === registrationIds.length &&
+      p.registration_ids.every((id: string) => requestedIdSet.has(id))
+  );
   if (reusablePayment?.stripe_session_id) {
     const existingSession = await stripe.checkout.sessions.retrieve(reusablePayment.stripe_session_id);
     if (existingSession.status === "open" && existingSession.url) {
