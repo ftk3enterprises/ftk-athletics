@@ -10,12 +10,12 @@ export function Hero() {
     <section className="relative isolate overflow-hidden bg-navy">
       <div className="absolute inset-0">
         <Image
-          src="https://images.pexels.com/photos/8337262/pexels-photo-8337262.jpeg?auto=compress&cs=tinysrgb&w=2400"
-          alt="Kids playing basketball on a sunny outdoor court lined with palm trees"
+          src="/about/hero-4.png"
+          alt="Kids playing flag football on a sunlit field at golden hour"
           fill
           priority
           sizes="100vw"
-          className="object-cover opacity-60"
+          className="object-cover opacity-40"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-navy from-0% via-navy/75 via-45% to-navy/10 to-100%" />
       </div>

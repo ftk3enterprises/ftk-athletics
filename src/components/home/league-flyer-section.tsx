@@ -105,19 +105,19 @@ export function LeagueFlyerSection() {
           <h3 className="mt-3 text-2xl text-navy sm:text-3xl">Leagues &amp; Community Events</h3>
         </Reveal>
 
-        <Reveal delay={0.16}>
-          <div
-            className={cn(
-              "mt-8 grid grid-cols-1 gap-5",
-              flyers.length >= 2 && "sm:grid-cols-2",
-              flyers.length >= 3 && "lg:grid-cols-3"
-            )}
-          >
-            {flyers.map((flyer) => (
-              <FlyerCard key={flyer.id} flyer={flyer} />
-            ))}
-          </div>
-        </Reveal>
+        <div
+          className={cn(
+            "mt-8 grid grid-cols-1 gap-5",
+            flyers.length >= 2 && "sm:grid-cols-2",
+            flyers.length >= 3 && "lg:grid-cols-3"
+          )}
+        >
+          {flyers.map((flyer, index) => (
+            <Reveal key={flyer.id} delay={0.16 + index * 0.25} duration={1.1} amount={0.2}>
+              <FlyerCard flyer={flyer} />
+            </Reveal>
+          ))}
+        </div>
       </div>
     </section>
   );

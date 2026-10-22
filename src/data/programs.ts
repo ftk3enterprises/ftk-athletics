@@ -60,8 +60,7 @@ export const programs: Program[] = [
       "Athletic performance, sport conditioning, movement, and organized play after the final bell.",
     fullDescription:
       "Our After School Clinic gives kids organized, coach-led athletic activity right after class lets out — no pickup juggling required. Each session builds fundamental movement and sport skills across a rotation of activities in a supportive, high-energy environment.",
-    image:
-      "https://images.unsplash.com/photo-1526232761682-d26e03ac148e?q=80&w=1600&auto=format&fit=crop",
+    image: "/about/after_school.jpg",
     location: null,
     // Parents pick their school site during registration (see src/data/schools.ts)
     // rather than this program having one fixed location.
@@ -387,7 +386,7 @@ export const programs: Program[] = [
     fullDescription:
       "Youth Kickball is FTK's inaugural kickball league for kids, with three age divisions (4-6, 7-9, and 10-12) playing on 10-player teams across a 5-week season. The 4-6 division is open to kids who must be 4, turning 5. Games are Saturdays at 9:00 AM at Turner Park at Skye Ranch Baseball Fields.",
     image:
-      "https://images.unsplash.com/photo-1777489689168-497290f235d5?q=80&w=1600&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1584227327140-31a5528dee6d?q=80&w=1600&auto=format&fit=crop",
     location: KICKBALL_LOCATION,
     requiresSchoolSelection: false,
     // Confirmed per the official flyer — see src/data/schedule.ts.
@@ -433,8 +432,7 @@ export const programs: Program[] = [
       "FTK's inaugural adult kickball league — 5 weeks of Sunday games, 18+.",
     fullDescription:
       "Adult Kickball is FTK's inaugural kickball league for adults 18+, playing on 12-player teams across a 5-week season. Games are Sundays at 9:00 AM at Turner Park at Skye Ranch Baseball Fields.",
-    image:
-      "https://images.unsplash.com/photo-1782605178463-fa7c50b42e6f?q=80&w=1600&auto=format&fit=crop",
+    image: "/about/adult-kickball.jpg",
     location: KICKBALL_LOCATION,
     requiresSchoolSelection: false,
     // Confirmed per the official flyer — see src/data/schedule.ts.
@@ -527,7 +525,7 @@ export const programs: Program[] = [
     fullDescription:
       "3v3 Basketball is a fast-paced, small-sided league format that means more touches, more shots, and more reps for every player on the court.",
     image:
-      "https://images.unsplash.com/photo-1562552052-dbdd31c06339?q=80&w=1600&auto=format&fit=crop",
+      "https://plus.unsplash.com/premium_photo-1726736630175-95add5bdfe00?q=80&w=1600&auto=format&fit=crop",
     location: null,
     requiresSchoolSelection: false,
     scheduleDisplay: "Thursdays, 5:30–7:00 PM · Nov 5 – Dec 3, 2026 (season dates subject to change)",

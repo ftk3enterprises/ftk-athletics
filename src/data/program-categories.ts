@@ -23,6 +23,13 @@ export interface ProgramCategory {
   /** Label used on the single-program CTA when that program isn't open for registration, and on the category page heading. */
   ctaLabel: string;
   programIds: string[];
+  /**
+   * Overrides the homepage showcase image (program-showcase.tsx), which
+   * otherwise defaults to the first program's own `image`. Use this when
+   * the category's representative photo shouldn't be tied to — and
+   * shouldn't change along with — any one program's own page/listing image.
+   */
+  image?: string;
 }
 
 export const programCategories: ProgramCategory[] = [
@@ -42,6 +49,7 @@ export const programCategories: ProgramCategory[] = [
       "High-energy sports camps for summer, holidays, teacher workdays, and every school break.",
     ctaLabel: "Find a camp",
     programIds: ["thanksgiving-camp", "christmas-camps", "spring-break-camp"],
+    image: "/about/camp.jpg",
   },
   {
     id: "youth-leagues",
@@ -51,6 +59,8 @@ export const programCategories: ProgramCategory[] = [
       "Kickball, 3v3 basketball, girls-only flag football, and volleyball.",
     ctaLabel: "Choose Youth Leagues",
     programIds: ["youth-kickball", "girls-flag-football", "3v3-basketball"],
+    image:
+      "https://images.unsplash.com/photo-1777489689168-497290f235d5?q=80&w=1600&auto=format&fit=crop",
   },
   {
     id: "adult-leagues",

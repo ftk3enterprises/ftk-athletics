@@ -77,7 +77,7 @@ function CategoryBlock({
   const image = (
     <div className="relative min-h-[280px] lg:min-h-[480px]">
       <Image
-        src={primaryProgram.image}
+        src={category.image ?? primaryProgram.image}
         alt=""
         fill
         sizes="(min-width: 1024px) 50vw, 100vw"
