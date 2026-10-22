@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { CheckCircle2, ShieldAlert } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -13,7 +13,6 @@ import * as authService from "@/services/auth-service";
 type Status = "checking" | "ready" | "invalid" | "success";
 
 function ResetPasswordForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get("next") === "/admin" ? "/admin" : "/profile";
   const [status, setStatus] = useState<Status>("checking");
@@ -172,7 +171,13 @@ function ResetPasswordForm() {
             : "Your password has been changed. You're signed in — continue to your profile."}
         </p>
         <Button
-          onClick={() => router.push(next)}
+          onClick={() => {
+            // Full navigation, not router.push: the header and /admin's
+            // own auth check are server components, and a client-side
+            // soft nav can reuse the cached "signed out" shell from
+            // before this page set the session cookie.
+            window.location.href = next;
+          }}
           className="mt-2 h-11 rounded-sm bg-impact font-heading text-impact-foreground hover:bg-impact/90"
         >
           {next === "/admin" ? "Go To Admin Portal" : "Go To My Profile"}
