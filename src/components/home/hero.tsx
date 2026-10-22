@@ -10,10 +10,11 @@ export function Hero() {
     <section className="relative isolate overflow-hidden bg-navy">
       <div className="absolute inset-0">
         <Image
-          src="/about/hero-4.png"
+          src="/about/hero-4.jpg"
           alt="Kids playing flag football on a sunlit field at golden hour"
           fill
           priority
+          fetchPriority="high"
           sizes="100vw"
           className="object-cover opacity-40"
         />

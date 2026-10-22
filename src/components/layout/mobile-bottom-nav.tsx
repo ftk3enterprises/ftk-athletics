@@ -34,6 +34,7 @@ export function MobileBottomNav() {
       <div className="grid h-16 grid-cols-4">
         <Link
           href="/"
+          prefetch={false}
           onClick={(e) => {
             if (isHome) {
               e.preventDefault();
@@ -51,6 +52,7 @@ export function MobileBottomNav() {
 
         <Link
           href="/programs"
+          prefetch={false}
           className={cn(
             "flex flex-col items-center justify-center gap-1 text-[11px] font-semibold uppercase tracking-wide transition-colors",
             isPrograms ? "text-carolina" : "text-white/55"
@@ -63,6 +65,7 @@ export function MobileBottomNav() {
         {isAdmin ? (
           <Link
             href="/schedule"
+            prefetch={false}
             className={cn(
               "flex flex-col items-center justify-center gap-1 text-[11px] font-semibold uppercase tracking-wide transition-colors",
               isSchedule ? "text-carolina" : "text-white/55"
@@ -74,6 +77,7 @@ export function MobileBottomNav() {
         ) : (
           <Link
             href={registerHref}
+            prefetch={false}
             className={cn(
               "flex flex-col items-center justify-center gap-1 text-[11px] font-semibold uppercase tracking-wide transition-colors",
               // Same active/inactive logic as Home/Programs/Profile (muted
@@ -90,6 +94,7 @@ export function MobileBottomNav() {
 
         <Link
           href={accountHref}
+          prefetch={false}
           className={cn(
             "flex flex-col items-center justify-center gap-1 text-[11px] font-semibold uppercase tracking-wide transition-colors",
             (isAdmin ? isAdminRoute : isProfileRoute) ? "text-carolina" : "text-white/55"

@@ -75,7 +75,7 @@ export const FLYERS: LeagueFlyer[] = [
     eyebrow: "Suncoast Flag Football",
     title: "Winter League 2026",
     supportingText: "Ages 5–14 · Friday nights at Evie's Golf Center",
-    flyerSrc: "/about/Winter Suncoast Flag Football Flyer 2026.png",
+    flyerSrc: "/about/winter-suncoast-flag-football-flyer-2026.jpg",
     flyerAlt:
       "Suncoast Flag Football Winter League 2026 flyer — Friday nights at Evie's Golf Center",
     flyerWidth: 1091,

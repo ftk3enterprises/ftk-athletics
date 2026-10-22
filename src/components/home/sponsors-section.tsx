@@ -131,6 +131,8 @@ export function SponsorsSection() {
                     <img
                       src={sponsor.src}
                       alt={sponsor.alt}
+                      loading="lazy"
+                      decoding="async"
                       className="h-auto w-full object-contain sm:h-auto sm:w-auto sm:max-h-full sm:max-w-full"
                     />
                   </div>

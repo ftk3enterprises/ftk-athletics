@@ -16,7 +16,7 @@ const archivoBlack = Archivo_Black({
 const hind = Hind({
   variable: "--font-hind",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
+  weight: ["400", "500", "600", "700"],
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://ftkathletics.com";
