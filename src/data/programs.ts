@@ -141,7 +141,7 @@ export const programs: Program[] = [
     image: "/about/end-of-camp.jpeg",
     location: null,
     requiresSchoolSelection: false,
-    scheduleDisplay: "Nov 23–27, 2026 (Thanksgiving Break week) · Exact operating days TBD",
+    scheduleDisplay: "Nov 23–27, 2026· Exact operating days TBD",
     startDate: "2026-11-23",
     endDate: "2026-11-27",
     ageRange: "Grades K-6",
@@ -218,7 +218,7 @@ export const programs: Program[] = [
     image: "/about/kids-zone-camp.jpeg",
     location: null,
     requiresSchoolSelection: false,
-    scheduleDisplay: "Dec 21, 2026 – Jan 1, 2027 (Winter Break, two weeks) · Exact operating days TBD",
+    scheduleDisplay: "Dec 21, 2026 – Jan 1, 2027",
     startDate: "2026-12-21",
     endDate: "2027-01-01",
     ageRange: "Grades K-6",
@@ -299,12 +299,12 @@ export const programs: Program[] = [
     shortDescription:
       "Make the most of spring break with active days filled with sports, games, team challenges, and fun with friends.",
     fullDescription:
-      "When school lets out for Spring Break, FTK is in. Spring Break Camp keeps kids active and engaged with a full day of games, challenges, and coached sport sessions. Registration opens once FTK confirms the exact operating days, hours, and location for this camp.",
+      "When school lets out for Spring Break, FTK is in. Spring Break Camp keeps kids active and engaged with a full day of games, challenges, and coached sport sessions.",
     image: "/about/coach-huddle.jpg",
     location: null,
     requiresSchoolSelection: false,
     scheduleDisplay:
-      "Mar 15–19, 2027 (Sarasota County Schools Spring Break) · Schedule and location TBD",
+      "Mar 15–19, 2027 (Sarasota County Schools Spring Break) · Exact operating days TBD",
     startDate: "2027-03-15",
     endDate: "2027-03-19",
     ageRange: "Grades K-6",
@@ -314,14 +314,8 @@ export const programs: Program[] = [
     capacity: 30,
     capacityIsDemo: true,
     spotsRemaining: 30,
-    // Not open yet — the school-break window is confirmed, but FTK's
-    // operating days/hours/location for this camp are not. Flip to
-    // registrationStatus: "open", registrationOpen: true (and update
-    // scheduleDisplay/location above) once those are finalized; the
-    // sessions below are already fully configured and ready to go live
-    // with no further changes.
-    registrationStatus: "coming-soon",
-    registrationOpen: false,
+    registrationStatus: "open",
+    registrationOpen: true,
     featured: false,
     stepUpEligible: true,
     sessionSelectionMode: "single",
@@ -337,7 +331,7 @@ export const programs: Program[] = [
         priceIsDemo: false,
         capacity: null,
         spotsRemaining: null,
-        registrationOpen: false,
+        registrationOpen: true,
         dateSelection: {
           type: "daily",
           availableDates: [
@@ -360,7 +354,7 @@ export const programs: Program[] = [
         priceIsDemo: false,
         capacity: null,
         spotsRemaining: null,
-        registrationOpen: false,
+        registrationOpen: true,
         dateSelection: {
           type: "weekly",
           availableWeeks: [
@@ -479,7 +473,7 @@ export const programs: Program[] = [
     image: "/about/girls-flag-football.jpg",
     location: null,
     requiresSchoolSelection: false,
-    scheduleDisplay: "Wednesdays, 5:00–6:30 PM · Nov 4 – Dec 2, 2026 (season dates subject to change)",
+    scheduleDisplay: "Wednesdays, 5:00–6:30 PM · Nov 4 – Dec 2, 2026 (dates below are placeholders pending FTK's confirmed weekday per school)",
     startDate: null,
     endDate: null,
     ageRange: "Grades 2-8",
@@ -528,7 +522,7 @@ export const programs: Program[] = [
       "https://plus.unsplash.com/premium_photo-1726736630175-95add5bdfe00?q=80&w=1600&auto=format&fit=crop",
     location: null,
     requiresSchoolSelection: false,
-    scheduleDisplay: "Thursdays, 5:30–7:00 PM · Nov 5 – Dec 3, 2026 (season dates subject to change)",
+    scheduleDisplay: "Thursdays, 5:30–7:00 PM · Nov 5 – Dec 3, 2026 (dates below are placeholders pending FTK's confirmed weekday per school)",
     startDate: null,
     endDate: null,
     ageRange: "Grades 3-8",

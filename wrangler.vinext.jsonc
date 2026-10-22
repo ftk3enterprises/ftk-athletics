@@ -1,0 +1,19 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  // vinext is now the primary deployment target — this replaces the OpenNext
+  // build (wrangler.jsonc) on the "ftk-athletics" Worker. The old spike name
+  // ("ftk-athletics-vinext-spike") is retired; its last deployment is stale
+  // but still reachable until deleted.
+  "name": "ftk-athletics",
+  "account_id": "7d98873a0cad80eac7396fff6ec2808a",
+  "main": "vinext/server/fetch-handler",
+  "compatibility_date": "2026-10-21",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "dist/client",
+    "binding": "ASSETS"
+  },
+  "observability": {
+    "enabled": true
+  }
+}

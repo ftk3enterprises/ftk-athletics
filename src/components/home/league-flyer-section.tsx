@@ -113,7 +113,7 @@ export function LeagueFlyerSection() {
           )}
         >
           {flyers.map((flyer, index) => (
-            <Reveal key={flyer.id} delay={0.16 + index * 0.25} duration={1.1} amount={0.2}>
+            <Reveal key={flyer.id} delay={0.1 + index * 0.08} duration={0.6} amount={0.2}>
               <FlyerCard flyer={flyer} />
             </Reveal>
           ))}

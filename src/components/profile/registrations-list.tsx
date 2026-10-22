@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, CheckCircle2, CreditCard } from "lucide-react";
+import { ArrowRight, CheckCircle2, Clock, CreditCard, XCircle } from "lucide-react";
 import { programs } from "@/data/programs";
 import * as registrationService from "@/services/registration-service";
 import * as paymentService from "@/services/payment-service";
@@ -33,8 +33,15 @@ const STATE_BADGE_STYLES: Record<RegistrationUiState, string> = {
 const STATE_BADGE_LABEL: Record<RegistrationUiState, string> = {
   awaiting_payment: "Payment Required",
   step_up_pending: "Step Up",
-  confirmed: "Confirmed",
+  confirmed: "Paid",
   cancelled: "Cancelled",
+};
+
+const STATE_BADGE_ICON: Record<RegistrationUiState, typeof CheckCircle2> = {
+  awaiting_payment: CreditCard,
+  step_up_pending: Clock,
+  confirmed: CheckCircle2,
+  cancelled: XCircle,
 };
 
 /**
@@ -156,6 +163,7 @@ export function RegistrationsList({ familyId, userId }: { familyId: string; user
                 const dateText = getSessionDateText(row);
                 const canRequestCancellation =
                   row.uiState === "confirmed" || row.uiState === "step_up_pending";
+                const StateIcon = STATE_BADGE_ICON[row.uiState];
 
                 return (
                   <div key={row.id} className="rounded-sm border border-border p-4">
@@ -171,8 +179,9 @@ export function RegistrationsList({ familyId, userId }: { familyId: string; user
                         )}
                       </div>
                       <span
-                        className={`inline-flex h-7 w-fit shrink-0 items-center rounded-sm px-2.5 text-xs font-semibold uppercase tracking-wide ${STATE_BADGE_STYLES[row.uiState]}`}
+                        className={`inline-flex h-7 w-fit shrink-0 items-center gap-1 rounded-sm px-2.5 text-xs font-semibold uppercase tracking-wide ${STATE_BADGE_STYLES[row.uiState]}`}
                       >
+                        <StateIcon className="size-3.5" aria-hidden />
                         {STATE_BADGE_LABEL[row.uiState]}
                       </span>
                     </div>

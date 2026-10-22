@@ -60,9 +60,9 @@ export function formatProgramPriceDisplay(program: Program): {
   sublabel: string | null;
 } {
   if (program.priceBreakdown) {
-    const { unitPrice, unitLabel, units, unitsLabel, periodLabel } = program.priceBreakdown;
+    const { unitPrice, unitLabel, units, unitsLabel } = program.priceBreakdown;
     return {
-      headline: `$${unitPrice * units} / ${periodLabel}`,
+      headline: `$${unitPrice * units}`,
       sublabel: `$${unitPrice}/${unitLabel} × ${units} ${unitsLabel}s`,
     };
   }

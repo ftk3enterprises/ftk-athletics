@@ -1,9 +1,35 @@
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Gift, Trophy, Users, Zap } from "lucide-react";
 import { getCategoryPrograms, programCategories, type ProgramCategory } from "@/data/program-categories";
+import { PictureFill } from "@/components/ui/picture-fill";
 import { Reveal } from "@/components/ui/reveal";
 import type { Program } from "@/types";
+
+const UNSPLASH_HOSTS = ["images.unsplash.com", "plus.unsplash.com"];
+
+/**
+ * Derives a mobile-sized source alongside the original image: for images we
+ * host, a pre-generated `-mobile.webp` sibling; for Unsplash URLs, the same
+ * URL with a smaller `w=` (Unsplash content-negotiates format itself, so
+ * only the width needs adjusting). Categories without a pre-generated
+ * sibling just get one size everywhere — no missing-asset risk.
+ */
+function responsiveSources(src: string): { desktop: string; mobile?: string } {
+  try {
+    const url = new URL(src);
+    if (UNSPLASH_HOSTS.includes(url.hostname)) {
+      const mobileUrl = new URL(src);
+      mobileUrl.searchParams.set("w", "800");
+      return { desktop: src, mobile: mobileUrl.toString() };
+    }
+    return { desktop: src };
+  } catch {
+    // Not a full URL — a local /about/*.jpg path.
+    const webp = src.replace(/\.jpe?g$/i, ".webp");
+    if (webp === src) return { desktop: src };
+    return { desktop: webp, mobile: webp.replace(/\.webp$/, "-mobile.webp") };
+  }
+}
 
 type Tone = "carolina" | "white" | "navy" | "impact";
 
@@ -74,15 +100,12 @@ function CategoryBlock({
     </div>
   );
 
+  const imageSrc = category.image ?? primaryProgram.image;
+  const { desktop, mobile } = responsiveSources(imageSrc);
+
   const image = (
     <div className="relative min-h-[280px] lg:min-h-[480px]">
-      <Image
-        src={category.image ?? primaryProgram.image}
-        alt=""
-        fill
-        sizes="(min-width: 1024px) 50vw, 100vw"
-        className="object-cover"
-      />
+      <PictureFill desktopSrc={desktop} mobileSrc={mobile} fallbackSrc={imageSrc} alt="" />
     </div>
   );
 

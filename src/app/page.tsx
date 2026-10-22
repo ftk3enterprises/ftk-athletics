@@ -1,6 +1,7 @@
 import { Hero } from "@/components/home/hero";
 import { Marquee } from "@/components/home/marquee";
 import { ProgramsSection } from "@/components/home/programs-section";
+import { GameplayVideoSection } from "@/components/home/gameplay-video-section";
 import { LeagueFlyerSection } from "@/components/home/league-flyer-section";
 import { StepUpSection } from "@/components/home/step-up-section";
 import { SponsorsSection } from "@/components/home/sponsors-section";
@@ -13,6 +14,7 @@ export default function Home() {
       <Hero />
       <Marquee />
       <ProgramsSection />
+      <GameplayVideoSection />
       <LeagueFlyerSection />
       <StepUpSection />
       <SponsorsSection />

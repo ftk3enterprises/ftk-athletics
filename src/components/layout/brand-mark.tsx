@@ -31,15 +31,19 @@ export function BrandMark({
           className="h-24 w-auto sm:h-28"
         />
       ) : (
-        <Image
-          src="/brand/ftk-logo-mark.png"
-          alt="For The Kids Athletics"
-          width={700}
-          height={446}
-          priority
-          unoptimized
-          className="h-14 w-auto sm:h-16"
-        />
+        <picture>
+          <source srcSet="/brand/ftk-logo-mark.webp" type="image/webp" />
+          <img
+            src="/brand/ftk-logo-mark.png"
+            alt="For The Kids Athletics"
+            width={700}
+            height={446}
+            loading="eager"
+            fetchPriority="high"
+            decoding="async"
+            className="h-14 w-auto sm:h-16"
+          />
+        </picture>
       )}
     </Link>
   );

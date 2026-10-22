@@ -48,3 +48,10 @@ supabase/.temp
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+/dist/
+.vinext/
+
+# raw video sources — original camera/phone exports, never web-optimized
+# and often over Cloudflare's 25 MiB per-asset limit. Keep these outside
+# public/ entirely; only the optimized public/videos/*.mp4 ships.
+/local-media-source/
