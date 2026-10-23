@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Download, Eye, Search } from "lucide-react";
+import { Download, Eye, Loader2, Search, X } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -12,19 +12,26 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { MultiSelectDropdown } from "@/components/admin/multi-select-dropdown";
+import { MobileFilterSheet } from "@/components/admin/mobile-filter-sheet";
+import {
+  EMPTY_ADMIN_FILTERS,
+  PAYMENT_STATUS_OPTIONS,
+  REQUEST_OPTIONS,
+  filtersToSearchParams,
+  hasActiveFilters,
+  matchesPaymentStatus,
+  matchesProgram,
+  matchesRequest,
+  type AdminFilterSelections,
+} from "@/lib/admin-filters";
+import { programs } from "@/data/programs";
 import type { AdminRegistrationRow } from "@/services/admin-service";
 import type { PaymentStatus } from "@/types";
 
@@ -45,7 +52,16 @@ const RESOLUTION_LABEL: Record<string, string> = {
   refund: "Refund",
 };
 
-type CancellationFilter = "all" | "requested" | "none";
+const REQUEST_LABEL: Record<string, string> = Object.fromEntries(
+  REQUEST_OPTIONS.map((o) => [o.value, o.label])
+);
+
+const PAYMENT_STATUS_LABEL: Record<string, string> = Object.fromEntries(
+  PAYMENT_STATUS_OPTIONS.map((o) => [o.value, o.label])
+);
+
+/** Every program currently advertised on the site — never a separate hardcoded list, so new/renamed/removed programs show up here automatically. */
+const PROGRAM_OPTIONS = Array.from(new Set(programs.map((p) => p.name))).sort();
 
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
@@ -58,18 +74,27 @@ function DetailRow({ label, value }: { label: string; value: string }) {
   );
 }
 
+function FilterChip({ label, onRemove }: { label: string; onRemove: () => void }) {
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2.5 py-1 text-xs font-medium text-foreground">
+      {label}
+      <button
+        type="button"
+        onClick={onRemove}
+        aria-label={`Remove ${label} filter`}
+        className="rounded-full text-muted-foreground hover:text-foreground"
+      >
+        <X className="size-3" aria-hidden />
+      </button>
+    </span>
+  );
+}
+
 export function AdminRegistrationsTable({ rows }: { rows: AdminRegistrationRow[] }) {
   const [search, setSearch] = useState("");
-  const [program, setProgram] = useState("all");
-  const [paymentStatus, setPaymentStatus] = useState("all");
-  const [cancellationStatus, setCancellationStatus] = useState<CancellationFilter>("all");
+  const [filters, setFilters] = useState<AdminFilterSelections>(EMPTY_ADMIN_FILTERS);
   const [detailsRow, setDetailsRow] = useState<AdminRegistrationRow | null>(null);
   const [isExporting, setIsExporting] = useState(false);
-
-  const programOptions = useMemo(
-    () => Array.from(new Set(rows.map((r) => r.programName))).sort(),
-    [rows]
-  );
 
   const filteredRows = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -78,23 +103,31 @@ export function AdminRegistrationsTable({ rows }: { rows: AdminRegistrationRow[]
         const haystack = `${row.parentName} ${row.participantName}`.toLowerCase();
         if (!haystack.includes(query)) return false;
       }
-      if (program !== "all" && row.programName !== program) return false;
-      if (paymentStatus !== "all" && row.paymentStatus !== paymentStatus) return false;
-      if (cancellationStatus === "requested" && !row.cancellationRequested) return false;
-      if (cancellationStatus === "none" && row.cancellationRequested) return false;
+      if (!matchesProgram(filters, row.programName)) return false;
+      if (!matchesPaymentStatus(filters, row.paymentStatus)) return false;
+      if (!matchesRequest(filters, row.cancellationRequested)) return false;
       return true;
     });
-  }, [rows, search, program, paymentStatus, cancellationStatus]);
+  }, [rows, search, filters]);
 
   const exportHref = useMemo(() => {
-    const params = new URLSearchParams();
+    const params = filtersToSearchParams(filters);
     if (search.trim()) params.set("search", search.trim());
-    if (program !== "all") params.set("program", program);
-    if (paymentStatus !== "all") params.set("paymentStatus", paymentStatus);
-    if (cancellationStatus !== "all") params.set("cancellationStatus", cancellationStatus);
     const query = params.toString();
     return query ? `/api/admin/export?${query}` : "/api/admin/export";
-  }, [search, program, paymentStatus, cancellationStatus]);
+  }, [search, filters]);
+
+  function clearAll() {
+    setSearch("");
+    setFilters(EMPTY_ADMIN_FILTERS);
+  }
+
+  function removeFilter(group: keyof AdminFilterSelections, value: string) {
+    setFilters((prev) => ({
+      ...prev,
+      [group]: (prev[group] as string[]).filter((v) => v !== value),
+    }));
+  }
 
   /**
    * Fetches and saves the file via blob instead of a plain `<a href>`
@@ -125,65 +158,75 @@ export function AdminRegistrationsTable({ rows }: { rows: AdminRegistrationRow[]
     }
   }
 
+  const filtersActive = hasActiveFilters(filters);
+
   return (
     <div>
-      {/* Controls */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
+      {/* Search — always visible, shared by mobile and desktop */}
+      <div className="relative w-full sm:w-64">
+        <Search
+          className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+          aria-hidden
+        />
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search parent or participant..."
+          className="h-9 w-full pl-8"
+          aria-label="Search by parent or participant name"
+        />
+      </div>
+
+      {/* Mobile controls: Filters button + icon-only export, in a compact row below search */}
+      <div className="mt-3 flex items-center gap-2 sm:hidden">
+        <MobileFilterSheet
+          programOptions={PROGRAM_OPTIONS}
+          filters={filters}
+          onApply={setFilters}
+        />
+        <button
+          type="button"
+          onClick={handleExport}
+          disabled={isExporting}
+          aria-label="Export to Excel"
+          title="Export to Excel"
+          className="inline-flex h-10 w-12 shrink-0 items-center justify-center rounded-sm bg-carolina text-navy transition-colors hover:bg-carolina/90 disabled:opacity-60"
+        >
+          {isExporting ? (
+            <Loader2 className="size-5 animate-spin" aria-hidden />
+          ) : (
+            <Download className="size-5" aria-hidden />
+          )}
+        </button>
+      </div>
+
+      {/* Desktop controls: multi-select dropdowns + labeled export button */}
+      <div className="mt-3 hidden flex-col gap-3 sm:flex sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
-          <div className="relative w-full sm:w-64">
-            <Search
-              className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-              aria-hidden
-            />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search parent or participant..."
-              className="h-9 pl-8"
-              aria-label="Search by parent or participant name"
-            />
-          </div>
-
-          <Select value={program} onValueChange={(v) => setProgram(v as string)}>
-            <SelectTrigger className="h-9 w-full sm:w-48" aria-label="Filter by program">
-              <SelectValue placeholder="All Programs" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Programs</SelectItem>
-              {programOptions.map((name) => (
-                <SelectItem key={name} value={name}>
-                  {name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select value={paymentStatus} onValueChange={(v) => setPaymentStatus(v as string)}>
-            <SelectTrigger className="h-9 w-full sm:w-44" aria-label="Filter by payment status">
-              <SelectValue placeholder="All Payment Statuses" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Payment Statuses</SelectItem>
-              <SelectItem value="paid">Paid</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="failed">Failed</SelectItem>
-              <SelectItem value="refunded">Refunded</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select
-            value={cancellationStatus}
-            onValueChange={(v) => setCancellationStatus(v as CancellationFilter)}
-          >
-            <SelectTrigger className="h-9 w-full sm:w-52" aria-label="Filter by cancellation request status">
-              <SelectValue placeholder="All Requests" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Requests</SelectItem>
-              <SelectItem value="requested">Cancellation Requested</SelectItem>
-              <SelectItem value="none">No Request</SelectItem>
-            </SelectContent>
-          </Select>
+          <MultiSelectDropdown
+            label="Programs"
+            allLabel="All Programs"
+            options={PROGRAM_OPTIONS.map((name) => ({ value: name, label: name }))}
+            selected={filters.programs}
+            onChange={(next) => setFilters((prev) => ({ ...prev, programs: next }))}
+            className="sm:w-48"
+          />
+          <MultiSelectDropdown
+            label="Payment Statuses"
+            allLabel="All Payment Statuses"
+            options={PAYMENT_STATUS_OPTIONS}
+            selected={filters.paymentStatuses}
+            onChange={(next) => setFilters((prev) => ({ ...prev, paymentStatuses: next }))}
+            className="sm:w-48"
+          />
+          <MultiSelectDropdown
+            label="Requests"
+            allLabel="All Requests"
+            options={REQUEST_OPTIONS}
+            selected={filters.requests}
+            onChange={(next) => setFilters((prev) => ({ ...prev, requests: next }))}
+            className="sm:w-48"
+          />
         </div>
 
         <button
@@ -197,6 +240,36 @@ export function AdminRegistrationsTable({ rows }: { rows: AdminRegistrationRow[]
         </button>
       </div>
 
+      {/* Active filter chips — desktop only; mobile shows the count on the Filters button itself */}
+      {filtersActive && (
+        <div className="mt-3 hidden flex-wrap items-center gap-2 sm:flex">
+          {filters.programs.map((p) => (
+            <FilterChip key={`program-${p}`} label={p} onRemove={() => removeFilter("programs", p)} />
+          ))}
+          {filters.paymentStatuses.map((p) => (
+            <FilterChip
+              key={`status-${p}`}
+              label={PAYMENT_STATUS_LABEL[p] ?? p}
+              onRemove={() => removeFilter("paymentStatuses", p)}
+            />
+          ))}
+          {filters.requests.map((r) => (
+            <FilterChip
+              key={`request-${r}`}
+              label={REQUEST_LABEL[r] ?? r}
+              onRemove={() => removeFilter("requests", r)}
+            />
+          ))}
+          <button
+            type="button"
+            onClick={() => setFilters(EMPTY_ADMIN_FILTERS)}
+            className="text-xs font-semibold uppercase tracking-wide text-impact hover:underline"
+          >
+            Clear All
+          </button>
+        </div>
+      )}
+
       <p className="mt-3 text-xs text-muted-foreground">
         Showing {filteredRows.length} of {rows.length} registration{rows.length === 1 ? "" : "s"}
       </p>
@@ -204,8 +277,17 @@ export function AdminRegistrationsTable({ rows }: { rows: AdminRegistrationRow[]
       {/* Table */}
       <div className="mt-4 rounded-sm border border-border">
         {filteredRows.length === 0 ? (
-          <div className="p-10 text-center text-sm text-muted-foreground">
+          <div className="flex flex-col items-center gap-3 p-10 text-center text-sm text-muted-foreground">
             No registrations match your filters.
+            {(filtersActive || search.trim()) && (
+              <button
+                type="button"
+                onClick={clearAll}
+                className="rounded-sm border border-border px-4 py-2 text-xs font-semibold uppercase tracking-wide text-navy transition-colors hover:bg-muted"
+              >
+                Clear Filters
+              </button>
+            )}
           </div>
         ) : (
           <Table className="min-w-[1240px]">

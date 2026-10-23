@@ -30,13 +30,13 @@ export default async function AdminPage() {
 
   return (
     <div className="bg-background">
-      <div className="bg-navy py-10 sm:py-12">
+      <div className="bg-navy py-6 sm:py-12">
         <div className="mx-auto w-[95%] max-w-[1600px]">
           <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-carolina">
             <ShieldCheck className="size-4" aria-hidden />
             View-Only Admin
           </div>
-          <h1 className="mt-2 text-4xl text-white sm:text-5xl">Registrations</h1>
+          <h1 className="mt-2 text-2xl text-white sm:text-5xl">Registrations</h1>
           <p className="mt-2 max-w-lg text-white/70">
             View, search, and export registrations, participant details, and payment information in one place.
           </p>

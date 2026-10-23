@@ -1,6 +1,7 @@
 import * as XLSX from "xlsx";
 import { listAdminExportRows } from "@/services/admin-service";
 import { isCurrentUserAdmin } from "@/lib/admin-auth";
+import { matchesPaymentStatus, matchesProgram, matchesRequest, searchParamsToFilters } from "@/lib/admin-filters";
 
 const HEADERS = [
   "Registration ID",
@@ -73,9 +74,7 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const search = searchParams.get("search")?.trim().toLowerCase() ?? "";
-  const program = searchParams.get("program") ?? "";
-  const paymentStatus = searchParams.get("paymentStatus") ?? "";
-  const cancellationStatus = searchParams.get("cancellationStatus") ?? "";
+  const filters = searchParamsToFilters(searchParams);
 
   const allRows = await listAdminExportRows();
 
@@ -84,12 +83,9 @@ export async function GET(request: Request) {
       const haystack = `${row.parentName} ${row.childName ?? ""}`.toLowerCase();
       if (!haystack.includes(search)) return false;
     }
-    if (program && row.programName !== program) return false;
-    if (paymentStatus && row.paymentStatus !== paymentStatus) return false;
-    if (cancellationStatus === "requested" && row.cancellationStatus !== "Cancellation Requested") {
-      return false;
-    }
-    if (cancellationStatus === "none" && row.cancellationStatus !== "") return false;
+    if (!matchesProgram(filters, row.programName)) return false;
+    if (!matchesPaymentStatus(filters, row.paymentStatus)) return false;
+    if (!matchesRequest(filters, row.cancellationStatus === "Cancellation Requested")) return false;
     return true;
   });
 
