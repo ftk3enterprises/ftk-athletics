@@ -18,9 +18,10 @@ export function GameplayVideoSection() {
         </Reveal>
 
         <Reveal delay={0.16}>
-          <p className="mt-5 max-w-xl leading-relaxed text-white/70">
-            One field, real plays, nonstop energy — this is what game day
-            looks like when FTK kids take the field.
+          <p className="mt-5 max-w-2xl leading-relaxed text-white/70">
+            From epic Nerf battles to teamwork and nonstop fun, see how FTK
+            brings excitement, energy, and unforgettable moments to every
+            game.
           </p>
         </Reveal>
 
