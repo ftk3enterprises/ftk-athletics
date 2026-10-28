@@ -135,7 +135,7 @@ export async function POST(request: NextRequest) {
 
   const { data: existingRegistrations, error: existingError } = await admin
     .from("registrations")
-    .select("participant_id, program_id, session_id")
+    .select("participant_id, program_id, session_id, selected_dates")
     .eq("family_id", family.id)
     .neq("status", "cancelled");
   if (existingError) {
@@ -145,6 +145,18 @@ export async function POST(request: NextRequest) {
   const existingKeys = new Set(
     (existingRegistrations ?? []).map((r) => `${r.participant_id}:${r.program_id}:${r.session_id}`)
   );
+  // Daily-rate sessions (camps) are bought incrementally — one prior
+  // registration for a session shouldn't block buying *different* days
+  // later, only re-buying the *same* days. existingKeys above still governs
+  // every other session type (leagues, weekly-rate, school-based), where one
+  // registration per session is the whole product.
+  const existingDatesByKey = new Map<string, Set<string>>();
+  for (const r of existingRegistrations ?? []) {
+    const key = `${r.participant_id}:${r.program_id}:${r.session_id}`;
+    const set = existingDatesByKey.get(key) ?? new Set<string>();
+    for (const d of (r.selected_dates as string[] | null) ?? []) set.add(d);
+    existingDatesByKey.set(key, set);
+  }
 
   const rows: {
     family_id: string;
@@ -162,6 +174,7 @@ export async function POST(request: NextRequest) {
     selected_weeks: ProgramWeek[] | null;
   }[] = [];
   const seenInThisRequest = new Set<string>();
+  const seenDatesInThisRequest = new Map<string, Set<string>>();
 
   for (const line of lines) {
     const { participantId, programId, sessionId } = line;
@@ -204,13 +217,20 @@ export async function POST(request: NextRequest) {
     }
 
     const dupeKey = `${participantId}:${programId}:${sessionId}`;
-    if (existingKeys.has(dupeKey) || seenInThisRequest.has(dupeKey)) {
-      return NextResponse.json(
-        { error: `${participantName} is already registered for ${program.name} — ${session.label}.` },
-        { status: 409 }
-      );
+    const isIncrementalDaily = session.dateSelection?.type === "daily";
+    // Every other session type (leagues, weekly-rate, school-based,
+    // flat-rate) is bought exactly once — one existing registration blocks
+    // a second. Daily-rate camp sessions are bought incrementally, handled
+    // below via per-date overlap instead of this blanket key check.
+    if (!isIncrementalDaily) {
+      if (existingKeys.has(dupeKey) || seenInThisRequest.has(dupeKey)) {
+        return NextResponse.json(
+          { error: `${participantName} is already registered for ${program.name} — ${session.label}.` },
+          { status: 409 }
+        );
+      }
+      seenInThisRequest.add(dupeKey);
     }
-    seenInThisRequest.add(dupeKey);
 
     let sessionDateRange = session.dateRange;
     let price: number;
@@ -222,19 +242,36 @@ export async function POST(request: NextRequest) {
       rateType = session.dateSelection.type;
       if (session.dateSelection.type === "daily") {
         const available = session.dateSelection.availableDates ?? [];
-        selectedDates = (line.dates ?? []).filter((d) => available.includes(d)).sort();
+        const alreadyOwned = existingDatesByKey.get(dupeKey) ?? new Set<string>();
+        const seenThisRequest = seenDatesInThisRequest.get(dupeKey) ?? new Set<string>();
+        selectedDates = (line.dates ?? [])
+          .filter((d) => available.includes(d) && !alreadyOwned.has(d) && !seenThisRequest.has(d))
+          .sort();
+        if (selectedDates.length === 0) {
+          const requestedAnyDates = (line.dates ?? []).length > 0;
+          return NextResponse.json(
+            {
+              error: requestedAnyDates
+                ? `${participantName} is already registered for the selected day(s) of ${program.name}.`
+                : `Select at least one day for ${program.name}.`,
+            },
+            { status: requestedAnyDates ? 409 : 400 }
+          );
+        }
+        for (const d of selectedDates) seenThisRequest.add(d);
+        seenDatesInThisRequest.set(dupeKey, seenThisRequest);
         price = calculateSessionPrice(session, { dates: selectedDates });
         sessionDateRange = formatSelectedDatesLabel(selectedDates);
       } else {
         selectedWeeks = resolveSelectedWeeks(session, line.weekIds);
         price = calculateSessionPrice(session, { weekIds: selectedWeeks.map((w) => w.id) });
         sessionDateRange = formatSelectedWeeksLabel(selectedWeeks);
-      }
-      if (price <= 0) {
-        return NextResponse.json(
-          { error: `Select at least one day or week for ${program.name}.` },
-          { status: 400 }
-        );
+        if (price <= 0) {
+          return NextResponse.json(
+            { error: `Select at least one week for ${program.name}.` },
+            { status: 400 }
+          );
+        }
       }
     } else {
       price = calculateSessionPrice(session, undefined);

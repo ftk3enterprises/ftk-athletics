@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { programs } from "@/data/programs";
 import { formatProgramPriceDisplay } from "@/lib/pricing";
 import * as registrationService from "@/services/registration-service";
-import type { Program, ProgramSession } from "@/types";
+import type { Program, ProgramSession, Registration } from "@/types";
 
 function isDateSelectionComplete(value: DateSelectionValue | undefined): boolean {
   return Boolean(value && ((value.dates?.length ?? 0) > 0 || (value.weekIds?.length ?? 0) > 0));
@@ -36,15 +36,11 @@ function isCompatible(program: Program, kind: "self" | "child") {
   return kind === "self" ? program.participantType === "adult" : program.participantType === "youth";
 }
 
-function purchasedKey(resolvedParticipantId: string, programId: string, sessionId: string) {
-  return `${resolvedParticipantId}:${programId}:${sessionId}`;
-}
-
 export default function SchedulePage() {
   const { user, family } = useAuth();
   const { draft, toggleAssignment, setSessionSelection, setDateSelection } = useRegistrationDraft();
   const router = useRouter();
-  const [purchased, setPurchased] = useState<Set<string> | null>(null);
+  const [purchased, setPurchased] = useState<Registration[] | null>(null);
 
   useEffect(() => {
     if (draft.participantIds.length === 0) router.replace("/register/participants");
@@ -56,18 +52,37 @@ export default function SchedulePage() {
     let active = true;
     registrationService.listRegistrationsByFamily(family.id).then((regs) => {
       if (!active) return;
-      setPurchased(
-        new Set(
-          regs
-            .filter((r) => r.status !== "cancelled")
-            .map((r) => purchasedKey(r.participantId, r.programId, r.sessionId))
-        )
-      );
+      setPurchased(regs.filter((r) => r.status !== "cancelled"));
     });
     return () => {
       active = false;
     };
   }, [family]);
+
+  /** Dates this participant already has a non-cancelled registration for, under this exact session. */
+  function purchasedDates(resolvedParticipantId: string, programId: string, sessionId: string): string[] {
+    return (purchased ?? [])
+      .filter((r) => r.participantId === resolvedParticipantId && r.programId === programId && r.sessionId === sessionId)
+      .flatMap((r) => r.selectedDates ?? []);
+  }
+
+  /**
+   * Daily-rate camp sessions are bought incrementally — one existing
+   * registration only exhausts the days it actually covers, not the whole
+   * session, so a family can come back and buy the remaining days later.
+   * Every other session type (leagues, weekly-rate, school-based,
+   * flat-rate) is still bought exactly once.
+   */
+  function isSessionFullyPurchased(participant: Participant, program: Program, session: ProgramSession): boolean {
+    if (session.dateSelection?.type === "daily") {
+      const available = session.dateSelection.availableDates ?? [];
+      const owned = new Set(purchasedDates(participant.resolvedId, program.id, session.id));
+      return available.length > 0 && available.every((d) => owned.has(d));
+    }
+    return (purchased ?? []).some(
+      (r) => r.participantId === participant.resolvedId && r.programId === program.id && r.sessionId === session.id
+    );
+  }
 
   const participants: Participant[] = useMemo(() => {
     if (!user || !family) return [];
@@ -92,7 +107,13 @@ export default function SchedulePage() {
   }
 
   function availableSessions(participant: Participant, program: Program): ProgramSession[] {
-    return program.sessions.filter((s) => !purchased!.has(purchasedKey(participant.resolvedId, program.id, s.id)));
+    return program.sessions.filter((s) => !isSessionFullyPurchased(participant, program, s));
+  }
+
+  function hasAnyRegistration(resolvedParticipantId: string, programId: string, sessionId: string): boolean {
+    return (purchased ?? []).some(
+      (r) => r.participantId === resolvedParticipantId && r.programId === programId && r.sessionId === sessionId
+    );
   }
 
   /** Other participants assigned to the same program+session — lets a date/week pick be copied across siblings attending together. */
@@ -110,10 +131,27 @@ export default function SchedulePage() {
     const key = sessionSelectionKey(participant.id, program.id);
     const value = draft.dateSelections[key] ?? {};
     const siblings = siblingsSharingSession(participant, program, session.id);
+
+    // Daily-rate camps: hide any dates this participant already has a
+    // registration for, so the picker only ever offers what's actually
+    // left to buy (and prices only the new selection, not a re-purchase).
+    const pickerSession: ProgramSession =
+      session.dateSelection.type === "daily"
+        ? {
+            ...session,
+            dateSelection: {
+              ...session.dateSelection,
+              availableDates: (session.dateSelection.availableDates ?? []).filter(
+                (d) => !purchasedDates(participant.resolvedId, program.id, session.id).includes(d)
+              ),
+            },
+          }
+        : session;
+
     return (
       <div className="ml-8">
         <DateSelectionPicker
-          session={session}
+          session={pickerSession}
           value={value}
           onChange={(next) => setDateSelection(participant.id, program.id, next)}
         />
@@ -227,7 +265,7 @@ export default function SchedulePage() {
                                 participantId={participant.id}
                                 program={program}
                                 isPurchased={(sessionId) =>
-                                  purchased!.has(purchasedKey(participant.resolvedId, program.id, sessionId))
+                                  hasAnyRegistration(participant.resolvedId, program.id, sessionId)
                                 }
                               />
                             )}
@@ -254,7 +292,7 @@ export default function SchedulePage() {
                             {fullyRegistered ? (
                               <span className="ml-auto inline-flex items-center gap-1 rounded-sm bg-carolina/15 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-navy">
                                 <CheckCircle2 className="size-3" aria-hidden />
-                                Fully Registered
+                                Already Registered
                               </span>
                             ) : (
                               available.length === 1 && (
@@ -279,8 +317,10 @@ export default function SchedulePage() {
                           {showSessionPicker && (
                             <div className="ml-8 mt-2 space-y-1.5">
                               {program.sessions.map((session) => {
-                                const isPurchased = purchased!.has(
-                                  purchasedKey(participant.resolvedId, program.id, session.id)
+                                const isPurchased = hasAnyRegistration(
+                                  participant.resolvedId,
+                                  program.id,
+                                  session.id
                                 );
                                 const isSelected = selectedSessionIds.includes(session.id);
                                 if (isPurchased) {
