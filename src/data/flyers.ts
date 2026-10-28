@@ -12,6 +12,16 @@ export interface LeagueFlyer {
   flyerWidth: number;
   flyerHeight: number;
   /**
+   * Optional separate, uncropped source for the "View Full Flyer" lightbox
+   * — use when flyerSrc/flyerWidth/flyerHeight above have been cropped to a
+   * fixed size for grid consistency with other cards, so the lightbox can
+   * still show the complete original. Omit when flyerSrc is already the
+   * full, uncropped flyer (the lightbox falls back to it).
+   */
+  fullFlyerSrc?: string;
+  fullFlyerWidth?: number;
+  fullFlyerHeight?: number;
+  /**
    * Optional call-to-action. Omit entirely (rather than pointing at an
    * unconfirmed destination) when there's nothing solid to send people to
    * yet — see the dated comments below for programs still pending
@@ -71,6 +81,28 @@ export const FLYERS: LeagueFlyer[] = [
     active: true,
   },
   {
+    id: "ftk-nerf-battles",
+    eyebrow: "FTK Athletics",
+    title: "Family Nerf Battle",
+    supportingText: "All Ages · Turner Park at Skye Ranch",
+    // Cropped to 768x1024 so this card matches the other two flyers'
+    // dimensions exactly in the grid — the full, uncropped original is
+    // shown in the lightbox via fullFlyerSrc below.
+    flyerSrc: "/about/nerf-battles-flyer.jpg",
+    flyerAlt:
+      "FTK Athletics Family Nerf Battle flyer — $30 per person, families welcome, Turner Park at Skye Ranch",
+    flyerWidth: 768,
+    flyerHeight: 1024,
+    fullFlyerSrc: "/about/nerf-battles-flyer-full.jpg",
+    fullFlyerWidth: 1024,
+    fullFlyerHeight: 1536,
+    // No confirmed date yet (see src/data/programs.ts nerf-battles) — link
+    // to the program page itself rather than a registration flow that
+    // isn't open.
+    cta: { label: "View Program", href: "/programs/nerf-battles" },
+    active: true,
+  },
+  {
     id: "suncoast-flag-football-winter-2026",
     eyebrow: "Suncoast Flag Football",
     title: "Winter League 2026",
@@ -81,10 +113,9 @@ export const FLYERS: LeagueFlyer[] = [
     flyerWidth: 1091,
     flyerHeight: 1441,
     cta: { label: "Visit Website", href: "https://suncoastflagfootball.com", external: true },
-    // This flyer lists "First games: Friday, January 8" for "Winter League
-    // 2026" — flag for the client to confirm whether that date has already
-    // passed (and this should be archived) or the league is still running.
-    active: true,
+    // Archived per client feedback (Winter Flag Football League should no
+    // longer appear in public-facing listings). Record kept, not deleted.
+    active: false,
   },
 ];
 

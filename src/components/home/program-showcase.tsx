@@ -66,15 +66,10 @@ function CategoryBlock({
   const imageOnRight = index % 2 === 1;
   const tone = TONE_CLASSES[style.tone];
   const Icon = style.icon;
-  const isSingle = categoryPrograms.length === 1;
   const primaryProgram = categoryPrograms[0];
 
   const ctaLabel = category.ctaLabel;
-  const ctaHref = isSingle
-    ? primaryProgram.registrationOpen
-      ? `/register?program=${primaryProgram.slug}`
-      : `/programs/${primaryProgram.slug}`
-    : `/programs/category/${category.slug}`;
+  const ctaHref = `/programs/category/${category.slug}`;
 
   const content = (
     <div

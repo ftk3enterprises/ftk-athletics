@@ -33,6 +33,32 @@ export function isSameDay(a: Date, b: Date): boolean {
   );
 }
 
+/** The Monday (local time) that starts the calendar week containing this date. */
+export function startOfWeek(date: Date): Date {
+  const day = date.getDay(); // 0 = Sun .. 6 = Sat
+  const diffToMonday = (day + 6) % 7;
+  const monday = new Date(date);
+  monday.setDate(date.getDate() - diffToMonday);
+  return monday;
+}
+
+/**
+ * Groups ISO "YYYY-MM-DD" date strings by the Monday-anchored calendar week
+ * they fall in, preserving input order within each group. Used both to
+ * price camp daily-rate selections per week (see calculateSessionPrice in
+ * src/lib/pricing.ts) and to render the date picker grouped by week.
+ */
+export function groupDatesByWeek(dates: string[]): string[][] {
+  const groups = new Map<string, string[]>();
+  for (const date of dates) {
+    const key = toLocalIso(startOfWeek(parseLocalDate(date)));
+    const group = groups.get(key);
+    if (group) group.push(date);
+    else groups.set(key, [date]);
+  }
+  return Array.from(groups.values());
+}
+
 /** All calendar dates an event should render on (inclusive range, one entry for single-day events). */
 export function eventDateRange(event: ScheduleEvent): Date[] {
   const start = parseLocalDate(event.startDate);

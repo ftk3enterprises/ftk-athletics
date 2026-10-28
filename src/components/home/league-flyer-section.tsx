@@ -17,14 +17,18 @@ function flyerRatio(flyer: LeagueFlyer): CSSProperties {
 }
 
 function FlyerDialog({ flyer }: { flyer: LeagueFlyer }) {
+  const src = flyer.fullFlyerSrc ?? flyer.flyerSrc;
+  const ratio: CSSProperties = {
+    aspectRatio: `${flyer.fullFlyerWidth ?? flyer.flyerWidth} / ${flyer.fullFlyerHeight ?? flyer.flyerHeight}`,
+  };
   return (
     <DialogContent className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-sm border-none bg-white p-3 ring-1 ring-foreground/10">
       <DialogTitle className="sr-only">
         {flyer.eyebrow} — {flyer.title} flyer
       </DialogTitle>
       <DialogDescription className="sr-only">Full-size view of the official flyer.</DialogDescription>
-      <div className="relative w-full overflow-hidden rounded-sm" style={flyerRatio(flyer)}>
-        <Image src={flyer.flyerSrc} alt={flyer.flyerAlt} fill sizes="(min-width: 640px) 28rem, 90vw" className="object-contain" />
+      <div className="relative w-full overflow-hidden rounded-sm" style={ratio}>
+        <Image src={src} alt={flyer.flyerAlt} fill sizes="(min-width: 640px) 28rem, 90vw" className="object-contain" />
       </div>
     </DialogContent>
   );

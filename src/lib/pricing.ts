@@ -1,4 +1,5 @@
 import type { Program, ProgramSession, ProgramWeek } from "@/types";
+import { groupDatesByWeek } from "@/lib/schedule-dates";
 
 /**
  * The single source of truth for FTK pricing. Both the UI (price displays,
@@ -21,6 +22,9 @@ export const AFTER_SCHOOL_SESSION_PRICE = AFTER_SCHOOL_DAILY_RATE * AFTER_SCHOOL
 export const CAMP_DAILY_RATE = 60;
 export const CAMP_WEEKLY_RATE = 250;
 
+/** Per the client-provided Nerf Battle flyer: $30 per person. */
+export const NERF_BATTLE_PRICE_PER_PERSON = 30;
+
 export interface DateSelectionInput {
   dates?: string[];
   weekIds?: string[];
@@ -31,6 +35,16 @@ export interface DateSelectionInput {
  * Sessions without a dateSelection (leagues, after-school, any flat-rate
  * session) are already priced per-registration via session.price. Sessions
  * with a dateSelection (camps) are priced per unit × units selected.
+ *
+ * Daily-type sessions with a configured `weeklyRate` (camps) get an
+ * automatic bulk discount: selected dates are grouped by calendar week
+ * (Monday-anchored), and any week where exactly 5 dates were selected is
+ * charged the flat weeklyRate instead of 5 × the daily rate. A week with
+ * fewer selected dates (including camps whose week has fewer than 5
+ * operating days to begin with, e.g. a holiday-shortened week) is always
+ * priced per day — it can never reach the 5-date threshold. Multi-week
+ * selections (e.g. Christmas Camp spanning two separate weeks) are priced
+ * per week and summed.
  */
 export function calculateSessionPrice(
   session: ProgramSession,
@@ -38,7 +52,13 @@ export function calculateSessionPrice(
 ): number {
   if (!session.dateSelection) return session.price;
   if (session.dateSelection.type === "daily") {
-    return session.price * (selection?.dates?.length ?? 0);
+    const dates = selection?.dates ?? [];
+    const weeklyRate = session.dateSelection.weeklyRate;
+    if (!weeklyRate) return session.price * dates.length;
+    return groupDatesByWeek(dates).reduce(
+      (total, week) => total + (week.length === 5 ? weeklyRate : session.price * week.length),
+      0
+    );
   }
   return session.price * (selection?.weekIds?.length ?? 0);
 }
@@ -60,11 +80,24 @@ export function formatProgramPriceDisplay(program: Program): {
   sublabel: string | null;
 } {
   if (program.priceBreakdown) {
-    const { unitPrice, unitLabel, units, unitsLabel } = program.priceBreakdown;
+    const { unitPrice, units, periodLabel } = program.priceBreakdown;
     return {
       headline: `$${unitPrice * units}`,
-      sublabel: `$${unitPrice}/${unitLabel} × ${units} ${unitsLabel}s`,
+      sublabel: `/ ${periodLabel}`,
     };
+  }
+
+  // A single daily-rate session with a bulk weeklyRate (camps) — show the
+  // same "$X – $Y" range a separate daily/weekly session pair used to
+  // produce, even though it's now one session with an automatic discount.
+  if (program.sessions.length === 1) {
+    const [session] = program.sessions;
+    if (session.dateSelection?.type === "daily" && session.dateSelection.weeklyRate) {
+      return {
+        headline: `$${session.price} – $${session.dateSelection.weeklyRate}`,
+        sublabel: "Daily or weekly rate",
+      };
+    }
   }
 
   const sessionPrices = Array.from(new Set(program.sessions.map((s) => s.price)));

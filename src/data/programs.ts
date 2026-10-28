@@ -7,6 +7,7 @@ import {
   CAMP_WEEKLY_RATE,
   KICKBALL_PRICE_PER_REGISTRATION,
   LEAGUE_PRICE_PER_REGISTRATION,
+  NERF_BATTLE_PRICE_PER_PERSON,
 } from "@/lib/pricing";
 import { SCHOOLS } from "@/data/schools";
 
@@ -141,9 +142,9 @@ export const programs: Program[] = [
     image: "/about/end-of-camp.jpeg",
     location: null,
     requiresSchoolSelection: false,
-    scheduleDisplay: "Nov 23–27, 2026· Exact operating days TBD",
+    scheduleDisplay: "Nov 23–25, 2026 · Exact operating days TBD",
     startDate: "2026-11-23",
-    endDate: "2026-11-27",
+    endDate: "2026-11-25",
     ageRange: "Grades K-6",
     gradeRange: "K-6",
     price: CAMP_DAILY_RATE,
@@ -155,52 +156,28 @@ export const programs: Program[] = [
     registrationOpen: true,
     featured: true,
     stepUpEligible: true,
-    // A parent picks one pricing path per registration pass — daily rate or
-    // the full-week rate — not a combination of both.
     sessionSelectionMode: "single",
     sessions: [
       {
         id: "thanksgiving-camp-daily",
         programId: "thanksgiving-camp",
-        label: "Daily Rate",
-        dateRange: "Nov 23–27, 2026 · Pick any day(s)",
+        label: "Select Your Days",
+        dateRange: "Nov 23–25, 2026 · Pick any day(s)",
         startDate: "2026-11-23",
-        endDate: "2026-11-27",
+        endDate: "2026-11-25",
         price: CAMP_DAILY_RATE,
         priceIsDemo: false,
         capacity: null,
         spotsRemaining: null,
         registrationOpen: true,
-        // Thanksgiving Day itself (Nov 26) is excluded as an operating day
-        // — the rest of the week's exact operating days are still pending
-        // client confirmation (see scheduleDisplay above).
+        // Only Mon–Wed (Nov 23–25) are available — Thu Nov 26 (Thanksgiving
+        // Day) and Fri Nov 27 are both excluded. With only 3 operating days
+        // this week can never reach the 5-day weeklyRate threshold, so it
+        // always prices at the daily rate — that's correct, not a bug.
         dateSelection: {
           type: "daily",
-          availableDates: ["2026-11-23", "2026-11-24", "2026-11-25", "2026-11-27"],
-        },
-      },
-      {
-        id: "thanksgiving-camp-weekly",
-        programId: "thanksgiving-camp",
-        label: "Weekly Rate",
-        dateRange: "Nov 23–27, 2026 (full week)",
-        startDate: "2026-11-23",
-        endDate: "2026-11-27",
-        price: CAMP_WEEKLY_RATE,
-        priceIsDemo: false,
-        capacity: null,
-        spotsRemaining: null,
-        registrationOpen: true,
-        dateSelection: {
-          type: "weekly",
-          availableWeeks: [
-            {
-              id: "thanksgiving-week",
-              label: "Thanksgiving Break Week",
-              startDate: "2026-11-23",
-              endDate: "2026-11-27",
-            },
-          ],
+          availableDates: ["2026-11-23", "2026-11-24", "2026-11-25"],
+          weeklyRate: CAMP_WEEKLY_RATE,
         },
       },
     ],
@@ -232,18 +209,13 @@ export const programs: Program[] = [
     registrationOpen: true,
     featured: true,
     stepUpEligible: true,
-    // A parent picks one pricing path per registration pass — daily rate or
-    // the full-week rate — not a combination of both. Both weeks (Dec 21-24
-    // and Dec 28-31, around the Christmas Day / New Year's Day closures)
-    // share this one Weekly Rate; see src/data/schedule.ts for the two
-    // weeks shown separately on the calendar.
     sessionSelectionMode: "single",
     sessions: [
       {
         id: "christmas-camps-daily",
         programId: "christmas-camps",
-        label: "Daily Rate",
-        dateRange: "Dec 21 – Jan 1 (excludes Dec 25 & Jan 1 holidays) · Pick any day(s)",
+        label: "Select Your Days",
+        dateRange: "Dec 21 – Jan 1 (excludes Dec 25 & Jan 1 holidays) · Pick any day(s) across either week",
         startDate: "2026-12-21",
         endDate: "2027-01-01",
         price: CAMP_DAILY_RATE,
@@ -251,9 +223,11 @@ export const programs: Program[] = [
         capacity: null,
         spotsRemaining: null,
         registrationOpen: true,
-        // Christmas Day and New Year's Day excluded as closures. The
-        // remaining 8 weekdays' exact operating status is still pending
-        // client confirmation.
+        // Christmas Day and New Year's Day excluded as closures — each week
+        // tops out at 4 operating days, so (like Thanksgiving) neither week
+        // can reach the 5-day weeklyRate threshold under the current
+        // holiday schedule. The remaining weekdays' exact operating status
+        // is still pending client confirmation.
         dateSelection: {
           type: "daily",
           availableDates: [
@@ -266,26 +240,7 @@ export const programs: Program[] = [
             "2026-12-30",
             "2026-12-31",
           ],
-        },
-      },
-      {
-        id: "christmas-camps-weekly",
-        programId: "christmas-camps",
-        label: "Weekly Rate",
-        dateRange: "Week of Dec 21–24 or Week of Dec 28–31",
-        startDate: "2026-12-21",
-        endDate: "2027-01-01",
-        price: CAMP_WEEKLY_RATE,
-        priceIsDemo: false,
-        capacity: null,
-        spotsRemaining: null,
-        registrationOpen: true,
-        dateSelection: {
-          type: "weekly",
-          availableWeeks: [
-            { id: "christmas-week-1", label: "Week 1", startDate: "2026-12-21", endDate: "2026-12-24" },
-            { id: "christmas-week-2", label: "Week 2", startDate: "2026-12-28", endDate: "2026-12-31" },
-          ],
+          weeklyRate: CAMP_WEEKLY_RATE,
         },
       },
     ],
@@ -323,7 +278,7 @@ export const programs: Program[] = [
       {
         id: "spring-break-camp-daily",
         programId: "spring-break-camp",
-        label: "Daily Rate",
+        label: "Select Your Days",
         dateRange: "Mar 15–19, 2027 · Pick any day(s)",
         startDate: "2027-03-15",
         endDate: "2027-03-19",
@@ -341,31 +296,54 @@ export const programs: Program[] = [
             "2027-03-18",
             "2027-03-19",
           ],
+          weeklyRate: CAMP_WEEKLY_RATE,
         },
       },
+    ],
+  },
+  {
+    id: "nerf-battles",
+    slug: "nerf-battles",
+    name: "Nerf Battles",
+    category: "Community Event",
+    participantType: "family",
+    shortDescription:
+      "Action-packed Nerf Battles with Capture the Flag, Last Man Standing, and more — fun for the whole family.",
+    fullDescription:
+      "Get ready for action-packed Nerf Battles! From Capture the Flag to Last Man Standing, enjoy exciting games, friendly competition, and fun for the whole family. Safety goggles and extra ammo are provided — just bring water and your Nerf gun of choice.",
+    image: "/about/nerf-group.jpg",
+    location: KICKBALL_LOCATION,
+    requiresSchoolSelection: false,
+    // No confirmed date yet — keep this "Date TBD" rather than inventing
+    // one; price and location are both confirmed via the client's flyer.
+    scheduleDisplay: "Date TBD · Turner Park at Skye Ranch Baseball Fields",
+    startDate: null,
+    endDate: null,
+    ageRange: "All ages — families welcome",
+    gradeRange: null,
+    price: NERF_BATTLE_PRICE_PER_PERSON,
+    priceIsDemo: false,
+    capacity: null,
+    capacityIsDemo: false,
+    spotsRemaining: null,
+    registrationStatus: "coming-soon",
+    registrationOpen: false,
+    featured: false,
+    stepUpEligible: false,
+    sessionSelectionMode: "single",
+    sessions: [
       {
-        id: "spring-break-camp-weekly",
-        programId: "spring-break-camp",
-        label: "Weekly Rate",
-        dateRange: "Mar 15–19, 2027 (full week)",
-        startDate: "2027-03-15",
-        endDate: "2027-03-19",
-        price: CAMP_WEEKLY_RATE,
+        id: "nerf-battles-tbd",
+        programId: "nerf-battles",
+        label: "Family Nerf Battle",
+        dateRange: "Date TBD",
+        startDate: null,
+        endDate: null,
+        price: NERF_BATTLE_PRICE_PER_PERSON,
         priceIsDemo: false,
         capacity: null,
         spotsRemaining: null,
-        registrationOpen: true,
-        dateSelection: {
-          type: "weekly",
-          availableWeeks: [
-            {
-              id: "spring-break-week",
-              label: "Spring Break Week",
-              startDate: "2027-03-15",
-              endDate: "2027-03-19",
-            },
-          ],
-        },
+        registrationOpen: false,
       },
     ],
   },
@@ -473,7 +451,7 @@ export const programs: Program[] = [
     image: "/about/girls-flag-football.jpg",
     location: null,
     requiresSchoolSelection: false,
-    scheduleDisplay: "Wednesdays, 5:00–6:30 PM · Nov 4 – Dec 2, 2026 (dates below are placeholders pending FTK's confirmed weekday per school)",
+    scheduleDisplay: "Coming Soon · Dates and registration details to be announced",
     startDate: null,
     endDate: null,
     ageRange: "Grades 2-8",
@@ -483,12 +461,11 @@ export const programs: Program[] = [
     capacity: 24,
     capacityIsDemo: true,
     spotsRemaining: 24,
-    // Registration is open for the season itself; the weekly Wednesday
-    // dates are a realistic temporary pattern (see src/data/schedule.ts),
-    // not yet confirmed by the client. Update both files together once
-    // real dates land.
-    registrationStatus: "open",
-    registrationOpen: true,
+    // Pulled back to "coming soon" per client feedback — the previous
+    // Wednesday placeholder dates were never actually confirmed. Re-open
+    // once FTK confirms a real season schedule.
+    registrationStatus: "coming-soon",
+    registrationOpen: false,
     featured: false,
     stepUpEligible: true,
     sessionSelectionMode: "single",
@@ -497,14 +474,14 @@ export const programs: Program[] = [
         id: "girls-flag-football-fall-2026",
         programId: "girls-flag-football",
         label: "Fall 2026 Season",
-        dateRange: "Wednesdays, Nov 4 – Dec 2, 2026",
-        startDate: "2026-11-04",
-        endDate: "2026-12-02",
+        dateRange: "Date TBD",
+        startDate: null,
+        endDate: null,
         price: LEAGUE_PRICE_PER_REGISTRATION,
         priceIsDemo: false,
         capacity: null,
         spotsRemaining: null,
-        registrationOpen: true,
+        registrationOpen: false,
       },
     ],
   },
@@ -522,7 +499,7 @@ export const programs: Program[] = [
       "https://plus.unsplash.com/premium_photo-1726736630175-95add5bdfe00?q=80&w=1600&auto=format&fit=crop",
     location: null,
     requiresSchoolSelection: false,
-    scheduleDisplay: "Thursdays, 5:30–7:00 PM · Nov 5 – Dec 3, 2026 (dates below are placeholders pending FTK's confirmed weekday per school)",
+    scheduleDisplay: "Coming Soon · Dates and registration details to be announced",
     startDate: null,
     endDate: null,
     ageRange: "Grades 3-8",
@@ -532,12 +509,11 @@ export const programs: Program[] = [
     capacity: 32,
     capacityIsDemo: true,
     spotsRemaining: 32,
-    // Registration is open for the season itself; the weekly Thursday dates
-    // are a realistic temporary pattern (see src/data/schedule.ts), not yet
-    // confirmed by the client. Update both files together once real dates
-    // land.
-    registrationStatus: "open",
-    registrationOpen: true,
+    // Pulled back to "coming soon" per client feedback — the previous
+    // Thursday placeholder dates were never actually confirmed. Re-open
+    // once FTK confirms a real season schedule.
+    registrationStatus: "coming-soon",
+    registrationOpen: false,
     featured: false,
     stepUpEligible: true,
     sessionSelectionMode: "single",
@@ -546,14 +522,58 @@ export const programs: Program[] = [
         id: "3v3-basketball-fall-2026",
         programId: "3v3-basketball",
         label: "Fall 2026 Season",
-        dateRange: "Thursdays, Nov 5 – Dec 3, 2026",
-        startDate: "2026-11-05",
-        endDate: "2026-12-03",
+        dateRange: "Date TBD",
+        startDate: null,
+        endDate: null,
         price: LEAGUE_PRICE_PER_REGISTRATION,
         priceIsDemo: false,
         capacity: null,
         spotsRemaining: null,
-        registrationOpen: true,
+        registrationOpen: false,
+      },
+    ],
+  },
+  {
+    id: "3v3-adult-basketball",
+    slug: "3v3-adult-basketball",
+    name: "3v3 Adult Basketball",
+    category: "League",
+    participantType: "adult",
+    shortDescription: "Fast-paced 3v3 basketball league for adults.",
+    fullDescription:
+      "3v3 Adult Basketball is a fast-paced, small-sided league format that means more touches, more shots, and more reps for every player on the court.",
+    image:
+      "https://images.unsplash.com/photo-1562519819-016930ada31b?q=80&w=1600&auto=format&fit=crop",
+    location: null,
+    requiresSchoolSelection: false,
+    scheduleDisplay: "Coming Soon · Dates and registration details to be announced",
+    startDate: null,
+    endDate: null,
+    ageRange: "18+",
+    gradeRange: null,
+    price: LEAGUE_PRICE_PER_REGISTRATION,
+    priceIsDemo: false,
+    capacity: 32,
+    capacityIsDemo: true,
+    spotsRemaining: 32,
+    registrationStatus: "coming-soon",
+    registrationOpen: false,
+    featured: false,
+    stepUpEligible: false,
+    sessionSelectionMode: "single",
+    sessions: [
+      {
+        id: "3v3-adult-basketball-fall-2026",
+        programId: "3v3-adult-basketball",
+        label: "Fall 2026 Season",
+        dateRange: "Date TBD",
+        startDate: null,
+        endDate: null,
+        price: LEAGUE_PRICE_PER_REGISTRATION,
+        priceIsDemo: false,
+        capacity: null,
+        spotsRemaining: null,
+        registrationOpen: false,
       },
     ],
   },
@@ -569,4 +589,13 @@ export function getFeaturedPrograms(): Program[] {
 
 export function getProgramSession(programId: string, sessionId: string) {
   return programs.find((p) => p.id === programId)?.sessions.find((s) => s.id === sessionId);
+}
+
+/** Stable sort: "coming soon" programs sink to the end of any listing, everything else keeps its existing relative order. */
+export function sortByRegistrationStatus(progs: Program[]): Program[] {
+  return [...progs].sort((a, b) => {
+    const aPending = a.registrationStatus === "coming-soon" ? 1 : 0;
+    const bPending = b.registrationStatus === "coming-soon" ? 1 : 0;
+    return aPending - bPending;
+  });
 }

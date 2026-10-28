@@ -1,4 +1,4 @@
-import { programs } from "@/data/programs";
+import { programs, sortByRegistrationStatus } from "@/data/programs";
 import type { Program } from "@/types";
 
 /**
@@ -69,7 +69,16 @@ export const programCategories: ProgramCategory[] = [
     description:
       "Organized play for adults who want competition, community, and a reason to keep moving.",
     ctaLabel: "Join the Adults",
-    programIds: ["adult-kickball"],
+    programIds: ["adult-kickball", "3v3-adult-basketball"],
+  },
+  {
+    id: "community-events",
+    slug: "community-events",
+    name: "Community Events",
+    description:
+      "One-off, family-friendly community events — no season-long commitment required.",
+    ctaLabel: "See Community Events",
+    programIds: ["nerf-battles"],
   },
 ];
 
@@ -78,9 +87,10 @@ export function getCategoryBySlug(slug: string): ProgramCategory | undefined {
 }
 
 export function getCategoryPrograms(category: ProgramCategory): Program[] {
-  return category.programIds
+  const matched = category.programIds
     .map((id) => programs.find((p) => p.id === id))
     .filter((p): p is Program => Boolean(p));
+  return sortByRegistrationStatus(matched);
 }
 
 export function getCategoryForProgram(programId: string): ProgramCategory | undefined {

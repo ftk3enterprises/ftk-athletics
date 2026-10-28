@@ -100,7 +100,7 @@ export function GameplayVideoPlayer() {
         <button
           type="button"
           onClick={handlePlayClick}
-          aria-label="Play video: See FTK in Action"
+          aria-label="Play video: Nerf Battles"
           className="group absolute inset-0 flex h-full w-full items-center justify-center focus-visible:outline-none"
         >
           <PictureFill

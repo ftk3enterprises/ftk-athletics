@@ -3,9 +3,9 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 /**
- * "nav" is the icon + FTK ATHLETICS wordmark (no tagline — illegible at
- * navbar height). "footer" is the full lockup including the tagline, sized
- * up where there's room for it to stay readable.
+ * Both variants use the same full lockup artwork (mark + tagline banner) —
+ * "nav" is a smaller, pre-sized export for the compact header, "footer" is
+ * the larger export for where there's more room.
  */
 export function BrandMark({
   className,
@@ -25,8 +25,8 @@ export function BrandMark({
         <Image
           src="/brand/ftk-logo-full.png"
           alt="For The Kids Athletics — For The Kids. For The Family. For The Community."
-          width={700}
-          height={488}
+          width={1200}
+          height={446}
           unoptimized
           className="h-24 w-auto sm:h-28"
         />
@@ -35,9 +35,9 @@ export function BrandMark({
           <source srcSet="/brand/ftk-logo-mark.webp" type="image/webp" />
           <img
             src="/brand/ftk-logo-mark.png"
-            alt="For The Kids Athletics"
-            width={700}
-            height={446}
+            alt="For The Kids Athletics — For The Kids. For The Family. For The Community."
+            width={688}
+            height={256}
             loading="eager"
             fetchPriority="high"
             decoding="async"

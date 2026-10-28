@@ -13,15 +13,15 @@ export function GameplayVideoSection() {
 
         <Reveal delay={0.08}>
           <h2 className="mt-3 max-w-2xl text-4xl uppercase leading-[1.05] text-white sm:text-5xl">
-            See FTK In Action
+            Nerf Battles!
           </h2>
         </Reveal>
 
         <Reveal delay={0.16}>
           <p className="mt-5 max-w-2xl leading-relaxed text-white/70">
-            From epic Nerf battles to teamwork and nonstop fun, see how FTK
-            brings excitement, energy, and unforgettable moments to every
-            game.
+            Get ready for action-packed Nerf Battles! From Capture the Flag
+            to Last Man Standing, enjoy exciting games, friendly
+            competition, and fun for the whole family.
           </p>
         </Reveal>
 

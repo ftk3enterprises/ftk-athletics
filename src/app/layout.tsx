@@ -33,7 +33,7 @@ export const metadata: Metadata = {
     description,
     url: siteUrl,
     siteName: "For The Kids Athletics",
-    images: [{ url: "/brand/ftk-logo-full.png", width: 700, height: 488, alt: "For The Kids Athletics" }],
+    images: [{ url: "/brand/ftk-logo-full.png", width: 1200, height: 446, alt: "For The Kids Athletics" }],
     locale: "en_US",
     type: "website",
   },

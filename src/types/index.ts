@@ -128,6 +128,13 @@ export interface DateSelectionConfig {
   availableDates?: string[];
   /** type "weekly": the selectable week blocks. */
   availableWeeks?: ProgramWeek[];
+  /**
+   * type "daily" only: flat rate charged for a calendar week when exactly 5
+   * of that week's dates are selected, replacing the per-day total for that
+   * week (see calculateSessionPrice in src/lib/pricing.ts). Omit for
+   * sessions with no such bulk-week discount.
+   */
+  weeklyRate?: number;
 }
 
 /**

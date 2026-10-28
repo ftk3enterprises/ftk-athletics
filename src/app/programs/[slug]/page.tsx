@@ -24,7 +24,7 @@ export async function generateMetadata({
   if (!program) return { title: "Program Not Found" };
   const title = `${program.name} | For The Kids Athletics`;
   const description = program.shortDescription;
-  const shareImage = { url: "/brand/ftk-logo-full.png", width: 700, height: 488, alt: "For The Kids Athletics" };
+  const shareImage = { url: "/brand/ftk-logo-full.png", width: 1200, height: 446, alt: "For The Kids Athletics" };
   return {
     title,
     description,

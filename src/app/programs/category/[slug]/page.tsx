@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { ProgramCard } from "@/components/programs/program-card";
 import { getCategoryBySlug, getCategoryPrograms, programCategories } from "@/data/program-categories";
@@ -30,9 +30,6 @@ export default async function ProgramCategoryPage({
 
   const categoryPrograms = getCategoryPrograms(category);
   if (categoryPrograms.length === 0) notFound();
-  if (categoryPrograms.length === 1) {
-    redirect(`/programs/${categoryPrograms[0].slug}`);
-  }
 
   return (
     <div className="bg-background">
@@ -50,7 +47,8 @@ export default async function ProgramCategoryPage({
           </p>
           <h1 className="mt-2 text-4xl text-white sm:text-5xl">{category.name}</h1>
           <p className="mt-4 max-w-xl text-white/70">
-            {categoryPrograms.length} programs currently planned under {category.name}.
+            {categoryPrograms.length} program{categoryPrograms.length === 1 ? "" : "s"} currently
+            planned under {category.name}.
           </p>
         </div>
       </div>

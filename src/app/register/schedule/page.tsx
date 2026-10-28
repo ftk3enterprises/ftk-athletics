@@ -113,8 +113,7 @@ export default function SchedulePage() {
     return (
       <div className="ml-8">
         <DateSelectionPicker
-          config={session.dateSelection}
-          pricePerUnit={session.price}
+          session={session}
           value={value}
           onChange={(next) => setDateSelection(participant.id, program.id, next)}
         />
