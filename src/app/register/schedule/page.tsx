@@ -131,27 +131,19 @@ export default function SchedulePage() {
     const key = sessionSelectionKey(participant.id, program.id);
     const value = draft.dateSelections[key] ?? {};
     const siblings = siblingsSharingSession(participant, program, session.id);
-
-    // Daily-rate camps: hide any dates this participant already has a
-    // registration for, so the picker only ever offers what's actually
-    // left to buy (and prices only the new selection, not a re-purchase).
-    const pickerSession: ProgramSession =
+    // Daily-rate camps: already-registered dates still show in the grid
+    // (for context) but render disabled and labeled, rather than being
+    // hidden outright — see DateSelectionPicker's alreadyRegisteredDates.
+    const alreadyRegisteredDates =
       session.dateSelection.type === "daily"
-        ? {
-            ...session,
-            dateSelection: {
-              ...session.dateSelection,
-              availableDates: (session.dateSelection.availableDates ?? []).filter(
-                (d) => !purchasedDates(participant.resolvedId, program.id, session.id).includes(d)
-              ),
-            },
-          }
-        : session;
+        ? purchasedDates(participant.resolvedId, program.id, session.id)
+        : [];
 
     return (
       <div className="ml-8">
         <DateSelectionPicker
-          session={pickerSession}
+          session={session}
+          alreadyRegisteredDates={alreadyRegisteredDates}
           value={value}
           onChange={(next) => setDateSelection(participant.id, program.id, next)}
         />

@@ -1,6 +1,6 @@
 "use client";
 
-import { Check } from "lucide-react";
+import { Check, Lock } from "lucide-react";
 import { groupDatesByWeek, parseLocalDate } from "@/lib/schedule-dates";
 import { calculateSessionPrice } from "@/lib/pricing";
 import { cn } from "@/lib/utils";
@@ -22,10 +22,13 @@ export function DateSelectionPicker({
   session,
   value,
   onChange,
+  alreadyRegisteredDates = [],
 }: {
   session: ProgramSession;
   value: DateSelectionValue;
   onChange: (value: DateSelectionValue) => void;
+  /** Daily mode only: dates this participant already has a registration for — still shown in the grid for context, but disabled and labeled rather than hidden. */
+  alreadyRegisteredDates?: string[];
 }) {
   const config = session.dateSelection;
   if (!config) return null;
@@ -33,6 +36,7 @@ export function DateSelectionPicker({
   if (config.type === "daily") {
     const selected = value.dates ?? [];
     const toggle = (date: string) => {
+      if (alreadyRegisteredDates.includes(date)) return;
       const next = selected.includes(date) ? selected.filter((d) => d !== date) : [...selected, date];
       onChange({ dates: next.sort() });
     };
@@ -61,6 +65,7 @@ export function DateSelectionPicker({
                 )}
                 <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
                   {weekDates.map((date) => {
+                    const isRegistered = alreadyRegisteredDates.includes(date);
                     const isSelected = selected.includes(date);
                     const d = parseLocalDate(date);
                     return (
@@ -68,19 +73,34 @@ export function DateSelectionPicker({
                         key={date}
                         type="button"
                         onClick={() => toggle(date)}
+                        disabled={isRegistered}
                         aria-pressed={isSelected}
+                        title={isRegistered ? "Already registered for this date" : undefined}
                         className={cn(
                           "flex flex-col items-center rounded-sm border px-2 py-2.5 text-center transition-colors",
-                          isSelected ? "border-impact bg-impact/10" : "border-border hover:border-navy/40"
+                          isRegistered
+                            ? "cursor-not-allowed border-border bg-muted/60 opacity-60"
+                            : isSelected
+                              ? "border-impact bg-impact/10"
+                              : "border-border hover:border-navy/40"
                         )}
                       >
                         <span className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                          {isSelected && <Check className="size-3 text-impact" aria-hidden />}
+                          {isRegistered ? (
+                            <Lock className="size-3" aria-hidden />
+                          ) : (
+                            isSelected && <Check className="size-3 text-impact" aria-hidden />
+                          )}
                           {d.toLocaleDateString("en-US", { weekday: "short" })}
                         </span>
                         <span className="mt-0.5 text-sm font-semibold text-navy">
                           {d.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                         </span>
+                        {isRegistered && (
+                          <span className="mt-0.5 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">
+                            Registered
+                          </span>
+                        )}
                       </button>
                     );
                   })}
