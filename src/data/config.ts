@@ -27,9 +27,9 @@ export const WEBSITE_DOMAIN = "FTKAthletics.com";
  * icon for any entry still blank so nothing points at a dead link.
  */
 export const SOCIAL_LINKS: { platform: "facebook" | "instagram" | "twitter"; href: string }[] = [
-  { platform: "facebook", href: "" },
-  { platform: "instagram", href: "" },
-  { platform: "twitter", href: "" },
+  { platform: "facebook", href: "https://www.facebook.com/ftkathletics" },
+  { platform: "instagram", href: "https://www.instagram.com/ftkathletics" },
+  // X/Twitter hidden for now — re-add once there's a live profile URL.
 ];
 
 export const LIABILITY_WAIVER_VERSION = "FL-Master-1.0";

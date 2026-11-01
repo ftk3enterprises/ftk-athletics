@@ -271,6 +271,18 @@ export function SiteHeader() {
           </SheetContent>
         </Sheet>
       </div>
+
+      <div className="border-t border-white/10 bg-navy">
+        <div className="mx-auto flex max-w-7xl flex-col items-start gap-1 px-4 py-1.5 text-left sm:flex-row sm:justify-between sm:gap-4 sm:px-6 lg:px-8">
+          <span className="text-xs font-semibold uppercase tracking-wide text-white/60">
+            For The <span className="text-carolina">Kids</span>. For The{" "}
+            <span className="text-impact">Family</span>. For The Community.
+          </span>
+          <span className="hidden text-xs font-semibold uppercase tracking-wide text-carolina sm:inline-block">
+            Multi-Sport Programs · Leagues For All Ages
+          </span>
+        </div>
+      </div>
     </header>
   );
 }

@@ -70,8 +70,7 @@ export const programs: Program[] = [
     // (AfterSchoolScheduleBlock) instead of the generic session list — see
     // sessions below, grouped by schoolId.
     schoolBasedSessions: true,
-    scheduleDisplay:
-      "3:30 – 4:30 PM · One day per week, varies by school · 4-week sessions (dates below are placeholders pending FTK's confirmed weekday per school)",
+    scheduleDisplay: "3:30 – 4:30 PM · Exact operating days TBD",
     startDate: null,
     endDate: null,
     ageRange: "Grades K-5",
@@ -195,7 +194,7 @@ export const programs: Program[] = [
     image: "/about/kids-zone-camp.jpeg",
     location: null,
     requiresSchoolSelection: false,
-    scheduleDisplay: "Dec 21, 2026 – Jan 1, 2027",
+    scheduleDisplay: "Dec 21, 2026 – Jan 1, 2027 · Exact operating days TBD",
     startDate: "2026-12-21",
     endDate: "2027-01-01",
     ageRange: "Grades K-6",
@@ -258,8 +257,7 @@ export const programs: Program[] = [
     image: "/about/coach-huddle.jpg",
     location: null,
     requiresSchoolSelection: false,
-    scheduleDisplay:
-      "Mar 15–19, 2027 (Sarasota County Schools Spring Break) · Exact operating days TBD",
+    scheduleDisplay: "Mar 15–19, 2027 · Exact operating days TBD",
     startDate: "2027-03-15",
     endDate: "2027-03-19",
     ageRange: "Grades K-6",
@@ -311,7 +309,8 @@ export const programs: Program[] = [
       "Action-packed Nerf Battles with Capture the Flag, Last Man Standing, and more — fun for the whole family.",
     fullDescription:
       "Get ready for action-packed Nerf Battles! From Capture the Flag to Last Man Standing, enjoy exciting games, friendly competition, and fun for the whole family. Safety goggles and extra ammo are provided — just bring water and your Nerf gun of choice.",
-    image: "/about/nerf-group.jpg",
+    image:
+      "https://images.unsplash.com/photo-1594950981383-6eb659d18fbf?q=80&w=1600&auto=format&fit=crop",
     location: KICKBALL_LOCATION,
     requiresSchoolSelection: false,
     // No confirmed date yet — keep this "Date TBD" rather than inventing

@@ -79,6 +79,7 @@ export const programCategories: ProgramCategory[] = [
       "One-off, family-friendly community events — no season-long commitment required.",
     ctaLabel: "See Community Events",
     programIds: ["nerf-battles"],
+    image: "/about/nerf-group-new.jpg",
   },
 ];
 

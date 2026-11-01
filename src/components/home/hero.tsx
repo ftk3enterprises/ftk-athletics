@@ -10,9 +10,9 @@ export function Hero() {
     <section className="relative isolate overflow-hidden bg-navy">
       <div className="absolute inset-0">
         <PictureFill
-          desktopSrc="/about/hero-4.webp"
-          fallbackSrc="/about/hero-4.jpg"
-          alt="Kids playing flag football on a sunlit field at golden hour"
+          desktopSrc="/about/hero-sunset.webp"
+          fallbackSrc="/about/hero-sunset.jpg"
+          alt="Kids playing soccer on a field at golden-hour sunset"
           priority
           className="opacity-40"
         />
@@ -26,11 +26,7 @@ export function Hero() {
           transition={{ duration: 0.6, ease: "easeOut" }}
           className="max-w-2xl"
         >
-          <span className="inline-block bg-impact px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-impact-foreground">
-            Multi-Sport Programs · Leagues For All Ages
-          </span>
-
-          <h1 className="mt-5 text-[3.4rem] leading-[0.88] text-white sm:text-[4.2rem] md:text-[5.1rem]">
+          <h1 className="text-[3.4rem] leading-[0.88] text-white sm:text-[4.2rem] md:text-[5.1rem]">
             More Sports.
             <br />
             <span className="text-carolina">More Ways To Play.</span>

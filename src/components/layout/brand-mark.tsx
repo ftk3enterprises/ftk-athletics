@@ -36,12 +36,12 @@ export function BrandMark({
           <img
             src="/brand/ftk-logo-mark.png"
             alt="For The Kids Athletics — For The Kids. For The Family. For The Community."
-            width={688}
+            width={774}
             height={256}
             loading="eager"
             fetchPriority="high"
             decoding="async"
-            className="h-14 w-auto sm:h-16"
+            className="h-10 w-auto sm:h-11"
           />
         </picture>
       )}
