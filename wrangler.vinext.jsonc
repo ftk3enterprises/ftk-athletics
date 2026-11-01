@@ -15,5 +15,9 @@
   },
   "observability": {
     "enabled": true
-  }
+  },
+  "routes": [
+    { "pattern": "ftkathletics.com", "custom_domain": true },
+    { "pattern": "www.ftkathletics.com", "custom_domain": true }
+  ]
 }
