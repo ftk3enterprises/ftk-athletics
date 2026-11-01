@@ -87,12 +87,8 @@ export const programs: Program[] = [
     capacity: null,
     capacityIsDemo: false,
     spotsRemaining: null,
-    // The program itself is active — every school is always selectable —
-    // even though no school currently has a confirmed 4-week session (see
-    // sessions below). "Coming Soon" describes a program, not these school
-    // locations, so this stays "open" rather than gating the whole program.
-    registrationStatus: "open",
-    registrationOpen: true,
+    registrationStatus: "coming-soon",
+    registrationOpen: false,
     featured: true,
     stepUpEligible: true,
     // One school's 4-week session at a time — a parent buys the current
@@ -122,7 +118,7 @@ export const programs: Program[] = [
         priceIsDemo: false,
         capacity: null,
         spotsRemaining: null,
-        registrationOpen: true,
+        registrationOpen: false,
         schoolId: school.value,
         classDates: placeholder.classDates,
       };
@@ -151,8 +147,8 @@ export const programs: Program[] = [
     capacity: null,
     capacityIsDemo: false,
     spotsRemaining: null,
-    registrationStatus: "open",
-    registrationOpen: true,
+    registrationStatus: "coming-soon",
+    registrationOpen: false,
     featured: true,
     stepUpEligible: true,
     sessionSelectionMode: "single",
@@ -168,7 +164,7 @@ export const programs: Program[] = [
         priceIsDemo: false,
         capacity: null,
         spotsRemaining: null,
-        registrationOpen: true,
+        registrationOpen: false,
         // Only Mon–Wed (Nov 23–25) are available — Thu Nov 26 (Thanksgiving
         // Day) and Fri Nov 27 are both excluded. With only 3 operating days
         // this week can never reach the 5-day weeklyRate threshold, so it
@@ -204,8 +200,8 @@ export const programs: Program[] = [
     capacity: null,
     capacityIsDemo: false,
     spotsRemaining: null,
-    registrationStatus: "open",
-    registrationOpen: true,
+    registrationStatus: "coming-soon",
+    registrationOpen: false,
     featured: true,
     stepUpEligible: true,
     sessionSelectionMode: "single",
@@ -221,7 +217,7 @@ export const programs: Program[] = [
         priceIsDemo: false,
         capacity: null,
         spotsRemaining: null,
-        registrationOpen: true,
+        registrationOpen: false,
         // Christmas Day and New Year's Day excluded as closures — each week
         // tops out at 4 operating days, so (like Thanksgiving) neither week
         // can reach the 5-day weeklyRate threshold under the current
@@ -267,8 +263,8 @@ export const programs: Program[] = [
     capacity: null,
     capacityIsDemo: false,
     spotsRemaining: null,
-    registrationStatus: "open",
-    registrationOpen: true,
+    registrationStatus: "coming-soon",
+    registrationOpen: false,
     featured: false,
     stepUpEligible: true,
     sessionSelectionMode: "single",
@@ -284,7 +280,7 @@ export const programs: Program[] = [
         priceIsDemo: false,
         capacity: null,
         spotsRemaining: null,
-        registrationOpen: true,
+        registrationOpen: false,
         dateSelection: {
           type: "daily",
           availableDates: [
