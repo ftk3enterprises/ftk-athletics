@@ -1,7 +1,13 @@
 import * as XLSX from "xlsx";
 import { listAdminExportRows } from "@/services/admin-service";
 import { isCurrentUserAdmin } from "@/lib/admin-auth";
-import { matchesPaymentStatus, matchesProgram, matchesRequest, searchParamsToFilters } from "@/lib/admin-filters";
+import {
+  matchesPaymentStatus,
+  matchesProgram,
+  matchesRegistrationStatus,
+  matchesRequest,
+  searchParamsToFilters,
+} from "@/lib/admin-filters";
 
 const HEADERS = [
   "Registration ID",
@@ -28,11 +34,27 @@ const HEADERS = [
   "Cancellation Reason",
   "Request Date",
   "Registered School / Location",
+  "Also Interested In (From Profile)",
+  "Interested In Coaching",
+  "Interested In Volunteering",
+  "Interested In Sponsorship",
+  "Cash Collected",
+  "Cash Collected At",
+  "Step Up Received",
+  "Step Up Received At",
 ] as const;
+
+const REGISTRATION_STATUS_LABEL: Record<string, string> = {
+  interested: "Interested",
+  pending_payment: "Pending Payment",
+  confirmed: "Confirmed",
+  cancelled: "Cancelled",
+};
 
 const PAYMENT_METHOD_LABEL: Record<string, string> = {
   online: "Pay Online",
   step_up: "Step Up For Students",
+  cash: "Cash",
 };
 
 const RATE_TYPE_LABEL: Record<string, string> = {
@@ -85,6 +107,7 @@ export async function GET(request: Request) {
     }
     if (!matchesProgram(filters, row.programName)) return false;
     if (!matchesPaymentStatus(filters, row.paymentStatus)) return false;
+    if (!matchesRegistrationStatus(filters, row.registrationStatus)) return false;
     if (!matchesRequest(filters, row.cancellationStatus === "Cancellation Requested")) return false;
     return true;
   });
@@ -109,13 +132,32 @@ export async function GET(request: Request) {
     [HEADERS[14]]: row.programLocation ? sanitizeCell(row.programLocation) : "",
     [HEADERS[15]]: row.amount,
     [HEADERS[16]]: PAYMENT_METHOD_LABEL[row.paymentMethod] ?? row.paymentMethod,
-    [HEADERS[17]]: row.paymentStatus,
-    [HEADERS[18]]: row.registrationStatus,
+    [HEADERS[17]]:
+      row.registrationStatus === "interested"
+        ? "No Payment Required"
+        : row.paymentMethod === "cash"
+          ? row.cashCollectedAt
+            ? "Cash Collected"
+            : "Cash Payment Due"
+          : row.paymentMethod === "step_up"
+            ? row.stepUpReceivedAt
+              ? "Step Up Received"
+              : "Step Up Payment Due"
+            : row.paymentStatus,
+    [HEADERS[18]]: REGISTRATION_STATUS_LABEL[row.registrationStatus] ?? row.registrationStatus,
     [HEADERS[19]]: row.cancellationStatus,
     [HEADERS[20]]: row.preferredResolution ? RESOLUTION_LABEL[row.preferredResolution] : "",
     [HEADERS[21]]: row.cancellationReason ? sanitizeCell(row.cancellationReason) : "",
     [HEADERS[22]]: formatDateTime(row.requestDate),
     [HEADERS[23]]: row.schoolLocation ? sanitizeCell(row.schoolLocation) : "",
+    [HEADERS[24]]: row.familyInterestedPrograms.length > 0 ? sanitizeCell(row.familyInterestedPrograms.join(", ")) : "",
+    [HEADERS[25]]: row.interestedInCoaching ? "Yes" : "No",
+    [HEADERS[26]]: row.interestedInVolunteering ? "Yes" : "No",
+    [HEADERS[27]]: row.interestedInSponsorship ? "Yes" : "No",
+    [HEADERS[28]]: row.paymentMethod === "cash" ? (row.cashCollectedAt ? "Yes" : "No") : "N/A",
+    [HEADERS[29]]: formatDateTime(row.cashCollectedAt),
+    [HEADERS[30]]: row.paymentMethod === "step_up" ? (row.stepUpReceivedAt ? "Yes" : "No") : "N/A",
+    [HEADERS[31]]: formatDateTime(row.stepUpReceivedAt),
   }));
 
   const worksheet =

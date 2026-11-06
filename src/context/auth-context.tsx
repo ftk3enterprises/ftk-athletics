@@ -25,7 +25,18 @@ interface AuthContextValue {
   signIn: (input: { email: string; password: string }) => Promise<{ isAdmin: boolean }>;
   signOut: () => Promise<void>;
   refreshFamily: () => Promise<void>;
-  ensureFamily: (input: { phone: string; interestedProgramIds?: string[] }) => Promise<Family>;
+  ensureFamily: (input: {
+    phone: string;
+    interestedProgramIds?: string[];
+    interestedInCoaching?: boolean;
+    interestedInVolunteering?: boolean;
+    interestedInSponsorship?: boolean;
+  }) => Promise<Family>;
+  updatePreferences: (input: {
+    interestedInCoaching: boolean;
+    interestedInVolunteering: boolean;
+    interestedInSponsorship: boolean;
+  }) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -89,7 +100,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user, loadFamily]);
 
   const ensureFamily = useCallback(
-    async (input: { phone: string; interestedProgramIds?: string[] }) => {
+    async (input: {
+      phone: string;
+      interestedProgramIds?: string[];
+      interestedInCoaching?: boolean;
+      interestedInVolunteering?: boolean;
+      interestedInSponsorship?: boolean;
+    }) => {
       if (!user) throw new Error("Must be signed in to create a family profile.");
       if (family) return family;
       const created = await profileService.createFamily({
@@ -98,6 +115,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email: user.email,
         phone: input.phone,
         interestedProgramIds: input.interestedProgramIds,
+        interestedInCoaching: input.interestedInCoaching,
+        interestedInVolunteering: input.interestedInVolunteering,
+        interestedInSponsorship: input.interestedInSponsorship,
       });
       setFamily(created);
       return created;
@@ -105,9 +125,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [user, family]
   );
 
+  const updatePreferences = useCallback(
+    async (input: {
+      interestedInCoaching: boolean;
+      interestedInVolunteering: boolean;
+      interestedInSponsorship: boolean;
+    }) => {
+      if (!family) throw new Error("No family profile to update.");
+      const updated = await profileService.updateFamilyPreferences(family.id, input);
+      setFamily(updated);
+    },
+    [family]
+  );
+
   const value = useMemo(
-    () => ({ user, family, isAdmin, isLoading, signUp, signIn, signOut, refreshFamily, ensureFamily }),
-    [user, family, isAdmin, isLoading, signUp, signIn, signOut, refreshFamily, ensureFamily]
+    () => ({
+      user,
+      family,
+      isAdmin,
+      isLoading,
+      signUp,
+      signIn,
+      signOut,
+      refreshFamily,
+      ensureFamily,
+      updatePreferences,
+    }),
+    [user, family, isAdmin, isLoading, signUp, signIn, signOut, refreshFamily, ensureFamily, updatePreferences]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

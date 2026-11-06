@@ -14,6 +14,9 @@ export function CreateFamilyForm({ redirectTo }: { redirectTo?: string }) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [interestedProgramIds, setInterestedProgramIds] = useState<string[]>([]);
+  const [interestedInCoaching, setInterestedInCoaching] = useState(false);
+  const [interestedInVolunteering, setInterestedInVolunteering] = useState(false);
+  const [interestedInSponsorship, setInterestedInSponsorship] = useState(false);
 
   function toggleProgram(programId: string, checked: boolean) {
     setInterestedProgramIds((prev) =>
@@ -25,7 +28,13 @@ export function CreateFamilyForm({ redirectTo }: { redirectTo?: string }) {
     e.preventDefault();
     setIsSubmitting(true);
     const data = new FormData(e.currentTarget);
-    await ensureFamily({ phone: String(data.get("phone") ?? ""), interestedProgramIds });
+    await ensureFamily({
+      phone: String(data.get("phone") ?? ""),
+      interestedProgramIds,
+      interestedInCoaching,
+      interestedInVolunteering,
+      interestedInSponsorship,
+    });
     setIsSubmitting(false);
     if (redirectTo) router.push(redirectTo);
   }
@@ -61,6 +70,36 @@ export function CreateFamilyForm({ redirectTo }: { redirectTo?: string }) {
                 {program.name}
               </label>
             ))}
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label>Get Involved</Label>
+          <p className="text-xs text-muted-foreground">
+            Optional — check any that apply. You can change these anytime from My Profile.
+          </p>
+          <div className="space-y-2">
+            <label className="flex items-center gap-2.5 rounded-sm border border-border px-3 py-2.5 text-sm">
+              <Checkbox
+                checked={interestedInCoaching}
+                onCheckedChange={(checked) => setInterestedInCoaching(checked === true)}
+              />
+              I&apos;m interested in coaching
+            </label>
+            <label className="flex items-center gap-2.5 rounded-sm border border-border px-3 py-2.5 text-sm">
+              <Checkbox
+                checked={interestedInVolunteering}
+                onCheckedChange={(checked) => setInterestedInVolunteering(checked === true)}
+              />
+              I&apos;m interested in volunteering on game days
+            </label>
+            <label className="flex items-center gap-2.5 rounded-sm border border-border px-3 py-2.5 text-sm">
+              <Checkbox
+                checked={interestedInSponsorship}
+                onCheckedChange={(checked) => setInterestedInSponsorship(checked === true)}
+              />
+              I&apos;m interested in becoming a sponsor
+            </label>
           </div>
         </div>
 

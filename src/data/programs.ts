@@ -14,6 +14,9 @@ import { SCHOOLS } from "@/data/schools";
 /** Turner Park at Skye Ranch Baseball Fields — shared home venue for both Kickball leagues' inaugural season. */
 const KICKBALL_LOCATION = "Turner Park at Skye Ranch Baseball Fields, 185 Little Dipper Lane, Sarasota, FL 34241";
 
+/** Evie's — shared home venue for all three daily/weekly-rate camps. */
+const CAMP_LOCATION = "Evie's, 4735 Bee Ridge Rd, Sarasota, FL 34233";
+
 /**
  * Placeholder After School session per school — one weekday each, so
  * registration is fully working end-to-end before FTK confirms real days.
@@ -89,6 +92,8 @@ export const programs: Program[] = [
     spotsRemaining: null,
     registrationStatus: "coming-soon",
     registrationOpen: false,
+    // Visitors can express interest / reserve a spot ahead of confirmed dates.
+    allowsInterest: true,
     featured: true,
     stepUpEligible: true,
     // One school's 4-week session at a time — a parent buys the current
@@ -135,9 +140,9 @@ export const programs: Program[] = [
     fullDescription:
       "When school's out for Thanksgiving, FTK is in. Thanksgiving Camp keeps kids active and engaged with a full day of games, challenges, and coached sport sessions. Choose a single day or save with the full-week rate.",
     image: "/about/end-of-camp.jpeg",
-    location: null,
+    location: CAMP_LOCATION,
     requiresSchoolSelection: false,
-    scheduleDisplay: "Nov 23–25, 2026 · Exact operating days TBD",
+    scheduleDisplay: "Nov 23–25, 2026",
     startDate: "2026-11-23",
     endDate: "2026-11-25",
     ageRange: "Grades K-6",
@@ -147,10 +152,11 @@ export const programs: Program[] = [
     capacity: null,
     capacityIsDemo: false,
     spotsRemaining: null,
-    registrationStatus: "coming-soon",
-    registrationOpen: false,
+    registrationStatus: "open",
+    registrationOpen: true,
     featured: true,
     stepUpEligible: true,
+    cashPaymentEligible: true,
     sessionSelectionMode: "single",
     sessions: [
       {
@@ -164,7 +170,7 @@ export const programs: Program[] = [
         priceIsDemo: false,
         capacity: null,
         spotsRemaining: null,
-        registrationOpen: false,
+        registrationOpen: true,
         // Only Mon–Wed (Nov 23–25) are available — Thu Nov 26 (Thanksgiving
         // Day) and Fri Nov 27 are both excluded. With only 3 operating days
         // this week can never reach the 5-day weeklyRate threshold, so it
@@ -188,9 +194,9 @@ export const programs: Program[] = [
     fullDescription:
       "When school lets out for Christmas Break, FTK is in. Christmas Camps keep kids active and engaged with a full day of games, challenges, and coached sport sessions. Choose a single day or save with the full-week rate.",
     image: "/about/kids-zone-camp.jpeg",
-    location: null,
+    location: CAMP_LOCATION,
     requiresSchoolSelection: false,
-    scheduleDisplay: "Dec 21, 2026 – Jan 1, 2027 · Exact operating days TBD",
+    scheduleDisplay: "Dec 21, 2026 – Jan 1, 2027",
     startDate: "2026-12-21",
     endDate: "2027-01-01",
     ageRange: "Grades K-6",
@@ -200,10 +206,11 @@ export const programs: Program[] = [
     capacity: null,
     capacityIsDemo: false,
     spotsRemaining: null,
-    registrationStatus: "coming-soon",
-    registrationOpen: false,
+    registrationStatus: "open",
+    registrationOpen: true,
     featured: true,
     stepUpEligible: true,
+    cashPaymentEligible: true,
     sessionSelectionMode: "single",
     sessions: [
       {
@@ -217,7 +224,7 @@ export const programs: Program[] = [
         priceIsDemo: false,
         capacity: null,
         spotsRemaining: null,
-        registrationOpen: false,
+        registrationOpen: true,
         // Christmas Day and New Year's Day excluded as closures — each week
         // tops out at 4 operating days, so (like Thanksgiving) neither week
         // can reach the 5-day weeklyRate threshold under the current
@@ -251,9 +258,9 @@ export const programs: Program[] = [
     fullDescription:
       "When school lets out for Spring Break, FTK is in. Spring Break Camp keeps kids active and engaged with a full day of games, challenges, and coached sport sessions.",
     image: "/about/coach-huddle.jpg",
-    location: null,
+    location: CAMP_LOCATION,
     requiresSchoolSelection: false,
-    scheduleDisplay: "Mar 15–19, 2027 · Exact operating days TBD",
+    scheduleDisplay: "Mar 15–19, 2027",
     startDate: "2027-03-15",
     endDate: "2027-03-19",
     ageRange: "Grades K-6",
@@ -263,10 +270,11 @@ export const programs: Program[] = [
     capacity: null,
     capacityIsDemo: false,
     spotsRemaining: null,
-    registrationStatus: "coming-soon",
-    registrationOpen: false,
+    registrationStatus: "open",
+    registrationOpen: true,
     featured: false,
     stepUpEligible: true,
+    cashPaymentEligible: true,
     sessionSelectionMode: "single",
     sessions: [
       {
@@ -280,7 +288,7 @@ export const programs: Program[] = [
         priceIsDemo: false,
         capacity: null,
         spotsRemaining: null,
-        registrationOpen: false,
+        registrationOpen: true,
         dateSelection: {
           type: "daily",
           availableDates: [
@@ -323,6 +331,8 @@ export const programs: Program[] = [
     spotsRemaining: null,
     registrationStatus: "coming-soon",
     registrationOpen: false,
+    // Visitors can express interest / reserve a spot ahead of a confirmed date.
+    allowsInterest: true,
     featured: false,
     stepUpEligible: false,
     sessionSelectionMode: "single",
@@ -461,6 +471,8 @@ export const programs: Program[] = [
     // once FTK confirms a real season schedule.
     registrationStatus: "coming-soon",
     registrationOpen: false,
+    // Visitors can express interest / reserve a spot ahead of a confirmed season.
+    allowsInterest: true,
     featured: false,
     stepUpEligible: true,
     sessionSelectionMode: "single",
@@ -509,6 +521,8 @@ export const programs: Program[] = [
     // once FTK confirms a real season schedule.
     registrationStatus: "coming-soon",
     registrationOpen: false,
+    // Visitors can express interest / reserve a spot ahead of a confirmed season.
+    allowsInterest: true,
     featured: false,
     stepUpEligible: true,
     sessionSelectionMode: "single",
@@ -553,6 +567,8 @@ export const programs: Program[] = [
     spotsRemaining: 32,
     registrationStatus: "coming-soon",
     registrationOpen: false,
+    // Visitors can express interest / reserve a spot ahead of a confirmed season.
+    allowsInterest: true,
     featured: false,
     stepUpEligible: false,
     sessionSelectionMode: "single",

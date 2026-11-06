@@ -17,6 +17,13 @@ export const CONTACT_LOCATION: string | null = "Sarasota, Florida";
  * the recipient only ever means editing it here.
  */
 export const ADMIN_NOTIFICATION_EMAIL = "info@ftkathletics.com";
+/**
+ * Dedicated sponsorship-inquiry recipient. Requires a Cloudflare Email
+ * Routing rule forwarding sponsors@ftkathletics.com -> the real inbox FTK
+ * checks (as of this writing, ftk3enterprises@gmail.com) — this address
+ * delivers nowhere on its own until that rule exists.
+ */
+export const SPONSOR_INQUIRY_NOTIFICATION_EMAIL = "sponsors@ftkathletics.com";
 /** Primary public domain — other client-owned domains will eventually redirect here. */
 export const WEBSITE_DOMAIN = "FTKAthletics.com";
 

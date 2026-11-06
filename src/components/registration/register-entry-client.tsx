@@ -25,7 +25,10 @@ export function RegisterEntryClient({
 
     reset();
     const program = programSlug ? getProgramBySlug(programSlug) : undefined;
-    const programSeeded = Boolean(program?.registrationOpen);
+    // "I'm Interested / Reserve a Spot" on a Coming Soon program drives
+    // visitors here the same way an open program's "Register Now" does —
+    // seed it too so the flow (minus payment) is identical either way.
+    const programSeeded = Boolean(program?.registrationOpen || program?.allowsInterest);
     if (program && programSeeded) seedProgram(program.id);
 
     const participantIsValid =

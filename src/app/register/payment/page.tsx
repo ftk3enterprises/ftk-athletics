@@ -2,20 +2,21 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { CreditCard, GraduationCap, Lock } from "lucide-react";
+import { Banknote, CreditCard, GraduationCap, Lock } from "lucide-react";
 import { useRegistrationDraft } from "@/context/registration-draft-context";
 import { RegistrationHeader } from "@/components/registration/registration-header";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { programs } from "@/data/programs";
 import * as registrationService from "@/services/registration-service";
 import * as paymentService from "@/services/payment-service";
-import type { RegistrationPaymentMethod } from "@/types";
+import type { Registration, RegistrationPaymentMethod } from "@/types";
 
 export default function PaymentPage() {
   const { draft, setPaymentId } = useRegistrationDraft();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [total, setTotal] = useState<number | null>(null);
+  const [registrations, setRegistrations] = useState<Registration[] | null>(null);
   const [isPaying, setIsPaying] = useState(false);
   const [error, setError] = useState<string | null>(
     searchParams.get("canceled") ? "Checkout was canceled. You can try again below." : null
@@ -28,16 +29,21 @@ export default function PaymentPage() {
       return;
     }
     Promise.all(draft.registrationIds.map((id) => registrationService.getRegistration(id))).then(
-      (registrations) => {
-        const sum = registrations.reduce((acc, r) => acc + (r?.price ?? 0), 0);
-        setTotal(sum);
-      }
+      (regs) => setRegistrations(regs.filter((r): r is Registration => r !== null))
     );
   }, [draft.registrationIds, router]);
 
-  if (draft.registrationIds.length === 0 || total === null) {
+  if (draft.registrationIds.length === 0 || registrations === null) {
     return <div className="mx-auto max-w-3xl px-4 py-24 text-center text-muted-foreground">Loading...</div>;
   }
+
+  const total = registrations.reduce((sum, r) => sum + r.price, 0);
+  // Only offered when every registration in this pass belongs to a program
+  // flagged cashPaymentEligible (currently the camps) — never shown for any
+  // other program, so this never changes behavior elsewhere.
+  const cashEligible =
+    registrations.length > 0 &&
+    registrations.every((r) => programs.find((p) => p.id === r.programId)?.cashPaymentEligible);
 
   async function handlePay() {
     setIsPaying(true);
@@ -70,13 +76,27 @@ export default function PaymentPage() {
     }
   }
 
+  async function handleCash() {
+    setIsPaying(true);
+    setError(null);
+    try {
+      await Promise.all(
+        draft.registrationIds.map((id) => registrationService.setRegistrationPaymentMethod(id, "cash"))
+      );
+      router.push("/register/confirmation");
+    } catch {
+      setError("Something went wrong. Please try again.");
+      setIsPaying(false);
+    }
+  }
+
   const count = draft.registrationIds.length;
 
   return (
     <div className="bg-background">
       <RegistrationHeader title="Payment" step={6} />
 
-      <div className="mx-auto max-w-xl px-4 py-14 sm:px-6 lg:px-8">
+      <div className={cn("mx-auto px-4 py-14 sm:px-6 lg:px-8", cashEligible ? "max-w-2xl" : "max-w-xl")}>
         <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
           <Lock className="size-3.5" aria-hidden />
           Secure Checkout
@@ -90,41 +110,56 @@ export default function PaymentPage() {
             <span className="text-2xl text-navy">${total}</span>
           </div>
 
-          <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className={cn("mt-5 grid grid-cols-1 gap-3", cashEligible ? "sm:grid-cols-3" : "sm:grid-cols-2")}>
             <button
               type="button"
               onClick={() => setMethod("online")}
               aria-pressed={method === "online"}
               className={cn(
-                "flex items-start gap-3 rounded-sm border p-4 text-left transition-colors",
+                "flex h-full flex-col items-center gap-2 rounded-sm border p-4 text-center transition-colors",
                 method === "online" ? "border-impact bg-impact/5" : "border-border hover:border-navy/40"
               )}
             >
-              <CreditCard className="mt-0.5 size-5 shrink-0 text-impact" aria-hidden />
-              <span>
-                <span className="block font-heading text-sm uppercase text-navy">Pay Online</span>
-                <span className="mt-0.5 block text-xs text-muted-foreground">Pay securely online.</span>
+              <CreditCard className="size-5 shrink-0 text-impact" aria-hidden />
+              <span className="font-heading text-xs uppercase leading-snug text-navy sm:text-sm">
+                Credit/Debit Card
               </span>
+              <span className="text-xs leading-snug text-muted-foreground">Pay securely online.</span>
             </button>
             <button
               type="button"
               onClick={() => setMethod("step_up")}
               aria-pressed={method === "step_up"}
               className={cn(
-                "flex items-start gap-3 rounded-sm border p-4 text-left transition-colors",
+                "flex h-full flex-col items-center gap-2 rounded-sm border p-4 text-center transition-colors",
                 method === "step_up" ? "border-impact bg-impact/5" : "border-border hover:border-navy/40"
               )}
             >
-              <GraduationCap className="mt-0.5 size-5 shrink-0 text-impact" aria-hidden />
-              <span>
-                <span className="block font-heading text-sm uppercase text-navy">
-                  Use Step Up For Students
-                </span>
-                <span className="mt-0.5 block text-xs text-muted-foreground">
-                  Use eligible Step Up scholarship funds.
-                </span>
+              <GraduationCap className="size-5 shrink-0 text-impact" aria-hidden />
+              <span className="font-heading text-xs uppercase leading-snug text-navy sm:text-sm">
+                Step Up For Students
+              </span>
+              <span className="text-xs leading-snug text-muted-foreground">
+                Use eligible scholarship funds.
               </span>
             </button>
+            {cashEligible && (
+              <button
+                type="button"
+                onClick={() => setMethod("cash")}
+                aria-pressed={method === "cash"}
+                className={cn(
+                  "flex h-full flex-col items-center gap-2 rounded-sm border p-4 text-center transition-colors",
+                  method === "cash" ? "border-impact bg-impact/5" : "border-border hover:border-navy/40"
+                )}
+              >
+                <Banknote className="size-5 shrink-0 text-impact" aria-hidden />
+                <span className="font-heading text-xs uppercase leading-snug text-navy sm:text-sm">Cash</span>
+                <span className="text-xs leading-snug text-muted-foreground">
+                  Pay in person on the first day.
+                </span>
+              </button>
+            )}
           </div>
 
           {method === "online" ? (
@@ -143,6 +178,24 @@ export default function PaymentPage() {
                 className="mt-6 h-12 w-full rounded-sm bg-impact font-heading text-base text-impact-foreground hover:bg-impact/90"
               >
                 {isPaying ? "Redirecting To Checkout..." : `Pay $${total} Now`}
+              </Button>
+            </>
+          ) : method === "cash" ? (
+            <>
+              <div className="mt-5 rounded-sm border border-impact/30 bg-impact/5 p-4 text-sm leading-relaxed text-navy">
+                <strong>Please bring the full cash payment (${total}) for all selected camp days on
+                your first day of camp.</strong> Submitting here does not charge anything now — FTK
+                will mark it received once your cash payment is collected on-site.
+              </div>
+
+              {error && <p className="mt-4 text-sm text-impact">{error}</p>}
+
+              <Button
+                onClick={handleCash}
+                disabled={isPaying}
+                className="mt-6 h-12 w-full rounded-sm bg-impact font-heading text-base text-impact-foreground hover:bg-impact/90"
+              >
+                {isPaying ? "Submitting..." : "Submit Registration"}
               </Button>
             </>
           ) : (

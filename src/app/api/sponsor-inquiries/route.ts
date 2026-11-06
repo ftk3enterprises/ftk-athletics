@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { ADMIN_NOTIFICATION_EMAIL } from "@/data/config";
+import { SPONSOR_INQUIRY_NOTIFICATION_EMAIL } from "@/data/config";
 
 function escapeHtml(value: string): string {
   return value
@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
       },
       body: JSON.stringify({
         from: process.env.RESEND_FROM_EMAIL || "FTK Athletics <onboarding@resend.dev>",
-        to: [ADMIN_NOTIFICATION_EMAIL],
+        to: [SPONSOR_INQUIRY_NOTIFICATION_EMAIL],
         subject: "New Sponsor Inquiry - FTK Athletics",
         html,
       }),

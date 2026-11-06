@@ -14,11 +14,21 @@ export default function ProgramsPage() {
   const { draft, toggleProgram } = useRegistrationDraft();
   const router = useRouter();
 
+  // An "I'm Interested / Reserve a Spot" draft always seeds exactly one
+  // Coming Soon program (see register-entry-client.tsx) and never offers
+  // adding more here (it stays disabled below, same as any other Coming
+  // Soon program) — so there's nothing to choose on this page. Skip
+  // straight to Schedule rather than showing a single locked-in checkbox.
+  const soleProgram =
+    draft.programIds.length === 1 ? programs.find((p) => p.id === draft.programIds[0]) : undefined;
+  const isInterestOnlyDraft = Boolean(soleProgram && !soleProgram.registrationOpen && soleProgram.allowsInterest);
+
   useEffect(() => {
     if (draft.participantIds.length === 0) router.replace("/register/participants");
-  }, [draft.participantIds.length, router]);
+    else if (isInterestOnlyDraft) router.replace("/register/schedule");
+  }, [draft.participantIds.length, isInterestOnlyDraft, router]);
 
-  if (draft.participantIds.length === 0) return null;
+  if (draft.participantIds.length === 0 || isInterestOnlyDraft) return null;
 
   const canContinue = draft.programIds.length > 0;
 

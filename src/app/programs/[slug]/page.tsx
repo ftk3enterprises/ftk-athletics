@@ -197,6 +197,19 @@ export default async function ProgramDetailPage({
                 >
                   Register Now
                 </Link>
+              ) : program.allowsInterest ? (
+                <>
+                  <Link
+                    href={`/register?program=${program.slug}`}
+                    className="flex h-12 w-full items-center justify-center whitespace-nowrap rounded-sm bg-navy px-2 text-center font-heading text-xs tracking-tight text-white transition-colors hover:bg-navy/90 sm:text-sm lg:text-xs"
+                  >
+                    I&apos;m Interested / Reserve A Spot
+                  </Link>
+                  <p className="mt-3 text-xs text-muted-foreground">
+                    Expressing interest does not guarantee a spot — FTK will reach out once
+                    registration officially opens.
+                  </p>
+                </>
               ) : (
                 <div className="flex h-12 w-full items-center justify-center rounded-sm bg-muted font-heading text-base text-muted-foreground">
                   Registration Opens Soon

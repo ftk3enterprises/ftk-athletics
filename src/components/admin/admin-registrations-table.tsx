@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Download, Eye, Loader2, Search, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { CheckCircle2, Download, Eye, Loader2, Search, X } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -23,28 +24,35 @@ import { MobileFilterSheet } from "@/components/admin/mobile-filter-sheet";
 import {
   EMPTY_ADMIN_FILTERS,
   PAYMENT_STATUS_OPTIONS,
+  REGISTRATION_STATUS_OPTIONS,
   REQUEST_OPTIONS,
   filtersToSearchParams,
   hasActiveFilters,
   matchesPaymentStatus,
   matchesProgram,
+  matchesRegistrationStatus,
   matchesRequest,
   type AdminFilterSelections,
+  type RequestFilterValue,
 } from "@/lib/admin-filters";
 import { programs } from "@/data/programs";
 import type { AdminRegistrationRow } from "@/services/admin-service";
-import type { PaymentStatus } from "@/types";
 
-const PAYMENT_STATUS_STYLES: Record<string, string> = {
-  paid: "bg-carolina text-navy",
-  pending: "bg-muted text-muted-foreground",
-  failed: "bg-impact text-impact-foreground",
-  refunded: "bg-ink/10 text-ink",
+const REGISTRATION_STATUS_STYLES: Record<string, string> = {
+  interested: "bg-[#B45309] text-white",
+  pending_payment: "bg-muted text-muted-foreground",
+  confirmed: "bg-carolina text-navy",
+  cancelled: "bg-ink/10 text-ink",
 };
+
+const REGISTRATION_STATUS_LABEL: Record<string, string> = Object.fromEntries(
+  REGISTRATION_STATUS_OPTIONS.map((o) => [o.value, o.label])
+);
 
 const PAYMENT_METHOD_LABEL: Record<string, string> = {
   online: "Pay Online",
   step_up: "Step Up For Students",
+  cash: "Cash",
 };
 
 const RESOLUTION_LABEL: Record<string, string> = {
@@ -62,6 +70,58 @@ const PAYMENT_STATUS_LABEL: Record<string, string> = Object.fromEntries(
 
 /** Every program currently advertised on the site — never a separate hardcoded list, so new/renamed/removed programs show up here automatically. */
 const PROGRAM_OPTIONS = Array.from(new Set(programs.map((p) => p.name))).sort();
+
+interface StatusDisplay {
+  label: string;
+  className: string;
+  icon?: boolean;
+  /** Smaller explanatory text under the badge, e.g. "No Payment Required". */
+  secondary?: string;
+  /** Which confirm-payment action to offer, if any. */
+  action?: "cash" | "step_up";
+}
+
+/**
+ * Collapses the registration status and payment status/method (three
+ * separate pieces of data — see AdminRegistrationRow) into the one most
+ * relevant badge for the admin table's merged Status column. The Details
+ * dialog still shows registration status and payment status as two
+ * distinct fields — this is a display simplification for the grid only,
+ * nothing about the underlying data changes.
+ */
+function getStatusDisplay(row: AdminRegistrationRow): StatusDisplay {
+  if (row.registrationStatus === "cancelled") {
+    return { label: "Cancelled", className: REGISTRATION_STATUS_STYLES.cancelled };
+  }
+  if (row.registrationStatus === "interested") {
+    return {
+      label: "Interested",
+      className: REGISTRATION_STATUS_STYLES.interested,
+      secondary: "No Payment Required",
+    };
+  }
+  if (row.paymentMethod === "cash") {
+    return row.cashCollectedAt
+      ? { label: "Cash Collected", className: "bg-carolina text-navy", icon: true }
+      : { label: "Cash Payment Due", className: "bg-[#B45309] text-white", action: "cash" };
+  }
+  if (row.paymentMethod === "step_up") {
+    return row.stepUpReceivedAt
+      ? { label: "Step Up Received", className: "bg-carolina text-navy", icon: true }
+      : { label: "Step Up Payment Due", className: "bg-navy/10 text-navy", action: "step_up" };
+  }
+  // Online/card payments — driven by the linked Payment record's status.
+  if (row.paymentStatus === "paid") {
+    return { label: "Paid", className: "bg-carolina text-navy", icon: true };
+  }
+  if (row.paymentStatus === "failed") {
+    return { label: "Failed", className: "bg-impact text-impact-foreground" };
+  }
+  if (row.paymentStatus === "refunded") {
+    return { label: "Refunded", className: "bg-ink/10 text-ink" };
+  }
+  return { label: "Payment Pending", className: REGISTRATION_STATUS_STYLES.pending_payment };
+}
 
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
@@ -91,10 +151,28 @@ function FilterChip({ label, onRemove }: { label: string; onRemove: () => void }
 }
 
 export function AdminRegistrationsTable({ rows }: { rows: AdminRegistrationRow[] }) {
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState<AdminFilterSelections>(EMPTY_ADMIN_FILTERS);
   const [detailsRow, setDetailsRow] = useState<AdminRegistrationRow | null>(null);
   const [isExporting, setIsExporting] = useState(false);
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
+
+  /** Manually confirms a cash or Step Up payment — see the route's own doc comment. */
+  async function handleConfirmPayment(registrationId: string) {
+    setConfirmingId(registrationId);
+    try {
+      const res = await fetch(`/api/admin/registrations/${registrationId}/confirm-payment`, {
+        method: "POST",
+      });
+      if (!res.ok) throw new Error();
+      router.refresh();
+    } catch {
+      window.alert("Couldn't confirm this payment. Please try again.");
+    } finally {
+      setConfirmingId(null);
+    }
+  }
 
   const filteredRows = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -105,6 +183,7 @@ export function AdminRegistrationsTable({ rows }: { rows: AdminRegistrationRow[]
       }
       if (!matchesProgram(filters, row.programName)) return false;
       if (!matchesPaymentStatus(filters, row.paymentStatus)) return false;
+      if (!matchesRegistrationStatus(filters, row.registrationStatus)) return false;
       if (!matchesRequest(filters, row.cancellationRequested)) return false;
       return true;
     });
@@ -220,11 +299,19 @@ export function AdminRegistrationsTable({ rows }: { rows: AdminRegistrationRow[]
             className="sm:w-48"
           />
           <MultiSelectDropdown
+            label="Registration Statuses"
+            allLabel="All Registration Statuses"
+            options={REGISTRATION_STATUS_OPTIONS}
+            selected={filters.registrationStatuses}
+            onChange={(next) => setFilters((prev) => ({ ...prev, registrationStatuses: next }))}
+            className="sm:w-56"
+          />
+          <MultiSelectDropdown
             label="Requests"
             allLabel="All Requests"
             options={REQUEST_OPTIONS}
             selected={filters.requests}
-            onChange={(next) => setFilters((prev) => ({ ...prev, requests: next }))}
+            onChange={(next) => setFilters((prev) => ({ ...prev, requests: next as RequestFilterValue[] }))}
             className="sm:w-48"
           />
         </div>
@@ -251,6 +338,13 @@ export function AdminRegistrationsTable({ rows }: { rows: AdminRegistrationRow[]
               key={`status-${p}`}
               label={PAYMENT_STATUS_LABEL[p] ?? p}
               onRemove={() => removeFilter("paymentStatuses", p)}
+            />
+          ))}
+          {filters.registrationStatuses.map((s) => (
+            <FilterChip
+              key={`regstatus-${s}`}
+              label={REGISTRATION_STATUS_LABEL[s] ?? s}
+              onRemove={() => removeFilter("registrationStatuses", s)}
             />
           ))}
           {filters.requests.map((r) => (
@@ -290,18 +384,17 @@ export function AdminRegistrationsTable({ rows }: { rows: AdminRegistrationRow[]
             )}
           </div>
         ) : (
-          <Table className="min-w-[1240px]">
+          <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="min-w-[150px]">Parent</TableHead>
-                <TableHead className="min-w-[130px]">Participant</TableHead>
-                <TableHead className="min-w-[170px]">Program</TableHead>
-                <TableHead className="min-w-[230px]">Selected Period / Dates</TableHead>
-                <TableHead className="min-w-[115px]">Registered</TableHead>
-                <TableHead className="min-w-[90px] text-right">Amount</TableHead>
-                <TableHead className="min-w-[160px]">Payment Status</TableHead>
-                <TableHead className="min-w-[200px]">Request Status</TableHead>
-                <TableHead className="min-w-[110px]">Details</TableHead>
+                <TableHead className="min-w-[130px]">Parent</TableHead>
+                <TableHead className="min-w-[110px]">Participant</TableHead>
+                <TableHead className="min-w-[140px]">Program</TableHead>
+                <TableHead className="min-w-[200px]">Selected Period / Dates</TableHead>
+                <TableHead className="min-w-[100px]">Registered</TableHead>
+                <TableHead className="min-w-[80px] text-right">Amount</TableHead>
+                <TableHead className="min-w-[170px]">Status</TableHead>
+                <TableHead className="min-w-[90px]">Details</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -331,26 +424,36 @@ export function AdminRegistrationsTable({ rows }: { rows: AdminRegistrationRow[]
                   <TableCell>{new Date(row.registeredAt).toLocaleDateString()}</TableCell>
                   <TableCell className="text-right font-medium text-navy">${row.amount}</TableCell>
                   <TableCell>
-                    {row.paymentMethod === "step_up" ? (
-                      <span className="inline-flex items-center rounded-sm bg-navy/10 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-navy">
-                        Step Up Payment
-                      </span>
-                    ) : (
-                      <span
-                        className={`inline-flex items-center rounded-sm px-2.5 py-1 text-xs font-semibold uppercase tracking-wide ${PAYMENT_STATUS_STYLES[row.paymentStatus as PaymentStatus]}`}
-                      >
-                        {row.paymentStatus}
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {row.cancellationRequested ? (
-                      <span className="inline-flex items-center gap-1 rounded-sm border border-amber-300 bg-amber-100 px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-amber-900">
-                        Cancellation Requested
-                      </span>
-                    ) : (
-                      <span className="text-xs text-muted-foreground">—</span>
-                    )}
+                    {(() => {
+                      const status = getStatusDisplay(row);
+                      return (
+                        <div className="flex flex-col items-start gap-1">
+                          <span
+                            className={`inline-flex items-center gap-1 rounded-sm px-2.5 py-1 text-xs font-semibold uppercase tracking-wide ${status.className}`}
+                          >
+                            {status.icon && <CheckCircle2 className="size-3.5" aria-hidden />}
+                            {status.label}
+                          </span>
+                          {status.secondary && (
+                            <span className="text-xs text-muted-foreground">{status.secondary}</span>
+                          )}
+                          {status.action && (
+                            <button
+                              type="button"
+                              onClick={() => handleConfirmPayment(row.registrationId)}
+                              disabled={confirmingId === row.registrationId}
+                              className="text-xs font-semibold uppercase tracking-wide text-impact hover:underline disabled:opacity-60"
+                            >
+                              {confirmingId === row.registrationId
+                                ? "Marking..."
+                                : status.action === "cash"
+                                  ? "Mark As Collected"
+                                  : "Mark As Received"}
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </TableCell>
                   <TableCell>
                     <button
@@ -407,9 +510,57 @@ export function AdminRegistrationsTable({ rows }: { rows: AdminRegistrationRow[]
                   label="Payment Method"
                   value={PAYMENT_METHOD_LABEL[detailsRow.paymentMethod] ?? detailsRow.paymentMethod}
                 />
-                <DetailRow label="Payment Status" value={detailsRow.paymentStatus} />
-                <DetailRow label="Registration Status" value={detailsRow.registrationStatus} />
+                <DetailRow
+                  label="Payment Status"
+                  value={
+                    detailsRow.registrationStatus === "interested"
+                      ? "No Payment Required"
+                      : detailsRow.paymentMethod === "cash"
+                        ? detailsRow.cashCollectedAt
+                          ? `Cash Collected (${new Date(detailsRow.cashCollectedAt).toLocaleString()})`
+                          : "Cash Payment Due"
+                        : detailsRow.paymentMethod === "step_up"
+                          ? detailsRow.stepUpReceivedAt
+                            ? `Step Up Received (${new Date(detailsRow.stepUpReceivedAt).toLocaleString()})`
+                            : "Step Up Payment Due"
+                          : detailsRow.paymentStatus
+                  }
+                />
+                <DetailRow
+                  label="Registration Status"
+                  value={REGISTRATION_STATUS_LABEL[detailsRow.registrationStatus] ?? detailsRow.registrationStatus}
+                />
+                <DetailRow
+                  label="Also Interested In (From Profile)"
+                  value={detailsRow.familyInterestedPrograms.join(", ") || "None"}
+                />
+                <DetailRow label="Interested In Coaching" value={detailsRow.interestedInCoaching ? "Yes" : "No"} />
+                <DetailRow
+                  label="Interested In Volunteering"
+                  value={detailsRow.interestedInVolunteering ? "Yes" : "No"}
+                />
+                <DetailRow
+                  label="Interested In Sponsorship"
+                  value={detailsRow.interestedInSponsorship ? "Yes" : "No"}
+                />
               </dl>
+
+              {((detailsRow.paymentMethod === "cash" && !detailsRow.cashCollectedAt) ||
+                (detailsRow.paymentMethod === "step_up" && !detailsRow.stepUpReceivedAt)) && (
+                <button
+                  type="button"
+                  onClick={() => handleConfirmPayment(detailsRow.registrationId)}
+                  disabled={confirmingId === detailsRow.registrationId}
+                  className="mt-4 inline-flex items-center gap-1.5 rounded-sm bg-impact px-3 py-2 text-xs font-semibold uppercase tracking-wide text-impact-foreground transition-colors hover:bg-impact/90 disabled:opacity-60"
+                >
+                  <CheckCircle2 className="size-3.5" aria-hidden />
+                  {confirmingId === detailsRow.registrationId
+                    ? "Marking..."
+                    : detailsRow.paymentMethod === "cash"
+                      ? "Mark Cash As Collected"
+                      : "Mark Step Up As Received"}
+                </button>
+              )}
 
               {detailsRow.cancellationRequested && (
                 <div className="rounded-sm border border-amber-300 bg-amber-50 p-3">

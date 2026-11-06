@@ -14,12 +14,14 @@ export type RequestFilterValue = "requested" | "none";
 export interface AdminFilterSelections {
   programs: string[];
   paymentStatuses: string[];
+  registrationStatuses: string[];
   requests: RequestFilterValue[];
 }
 
 export const EMPTY_ADMIN_FILTERS: AdminFilterSelections = {
   programs: [],
   paymentStatuses: [],
+  registrationStatuses: [],
   requests: [],
 };
 
@@ -30,13 +32,26 @@ export const PAYMENT_STATUS_OPTIONS: { value: string; label: string }[] = [
   { value: "refunded", label: "Refunded" },
 ];
 
+/** Mirrors Registration["status"] (src/types/index.ts) — kept as plain strings here like every other filter option. */
+export const REGISTRATION_STATUS_OPTIONS: { value: string; label: string }[] = [
+  { value: "interested", label: "Interested" },
+  { value: "pending_payment", label: "Pending Payment" },
+  { value: "confirmed", label: "Confirmed" },
+  { value: "cancelled", label: "Cancelled" },
+];
+
 export const REQUEST_OPTIONS: { value: RequestFilterValue; label: string }[] = [
   { value: "requested", label: "Cancellation Requested" },
   { value: "none", label: "No Request" },
 ];
 
 export function countActiveFilters(filters: AdminFilterSelections): number {
-  return filters.programs.length + filters.paymentStatuses.length + filters.requests.length;
+  return (
+    filters.programs.length +
+    filters.paymentStatuses.length +
+    filters.registrationStatuses.length +
+    filters.requests.length
+  );
 }
 
 export function hasActiveFilters(filters: AdminFilterSelections): boolean {
@@ -51,6 +66,10 @@ export function matchesPaymentStatus(filters: AdminFilterSelections, paymentStat
   return filters.paymentStatuses.length === 0 || filters.paymentStatuses.includes(paymentStatus);
 }
 
+export function matchesRegistrationStatus(filters: AdminFilterSelections, registrationStatus: string): boolean {
+  return filters.registrationStatuses.length === 0 || filters.registrationStatuses.includes(registrationStatus);
+}
+
 export function matchesRequest(filters: AdminFilterSelections, cancellationRequested: boolean): boolean {
   if (filters.requests.length === 0) return true;
   return filters.requests.some((r) => (r === "requested" ? cancellationRequested : !cancellationRequested));
@@ -60,6 +79,9 @@ export function filtersToSearchParams(filters: AdminFilterSelections): URLSearch
   const params = new URLSearchParams();
   if (filters.programs.length > 0) params.set("program", filters.programs.join(","));
   if (filters.paymentStatuses.length > 0) params.set("paymentStatus", filters.paymentStatuses.join(","));
+  if (filters.registrationStatuses.length > 0) {
+    params.set("registrationStatus", filters.registrationStatuses.join(","));
+  }
   if (filters.requests.length > 0) params.set("cancellationStatus", filters.requests.join(","));
   return params;
 }
@@ -67,10 +89,12 @@ export function filtersToSearchParams(filters: AdminFilterSelections): URLSearch
 export function searchParamsToFilters(params: URLSearchParams): AdminFilterSelections {
   const program = params.get("program");
   const paymentStatus = params.get("paymentStatus");
+  const registrationStatus = params.get("registrationStatus");
   const cancellationStatus = params.get("cancellationStatus");
   return {
     programs: program ? program.split(",").filter(Boolean) : [],
     paymentStatuses: paymentStatus ? paymentStatus.split(",").filter(Boolean) : [],
+    registrationStatuses: registrationStatus ? registrationStatus.split(",").filter(Boolean) : [],
     requests: cancellationStatus
       ? (cancellationStatus.split(",").filter(Boolean) as RequestFilterValue[])
       : [],

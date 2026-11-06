@@ -53,6 +53,7 @@ export default function ConfirmationPage() {
         sessionLabel: string;
         sessionDateRange: string | null;
         schoolLocation: string | null;
+        programLocation: string | null;
         price: number;
       }[];
     }
@@ -66,12 +67,15 @@ export default function ConfirmationPage() {
       sessionLabel: reg.sessionLabel,
       sessionDateRange: reg.sessionDateRange,
       schoolLocation: reg.schoolLocation,
+      programLocation: program?.location ?? null,
       price: reg.price,
     });
     grouped.set(reg.participantId, group);
   }
   const total = registrations.reduce((sum, r) => sum + r.price, 0);
   const isStepUp = registrations.every((r) => r.paymentMethod === "step_up");
+  const isCash = registrations.every((r) => r.paymentMethod === "cash");
+  const isInterested = registrations.every((r) => r.status === "interested");
 
   function handleNavigate(path: string) {
     navigatingAwayRef.current = true;
@@ -84,12 +88,28 @@ export default function ConfirmationPage() {
       <div className="bg-navy py-16 text-center sm:py-20">
         <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8">
           <CheckCircle2 className="mx-auto size-16 text-carolina" aria-hidden />
-          {isStepUp ? (
+          {isInterested ? (
+            <>
+              <h1 className="mt-5 text-4xl text-white sm:text-5xl">Thanks For Your Interest!</h1>
+              <p className="mt-3 text-white/70">
+                We&apos;ve got {registrations.length === 1 ? "it" : "them"} noted — this doesn&apos;t
+                guarantee a spot. FTK will reach out once registration officially opens.
+              </p>
+            </>
+          ) : isStepUp ? (
             <>
               <h1 className="mt-5 text-4xl text-white sm:text-5xl">Registration Submitted</h1>
               <p className="mt-3 text-white/70">
                 {registrations.length} registration{registrations.length === 1 ? "" : "s"} saved for
                 Step Up For Students.
+              </p>
+            </>
+          ) : isCash ? (
+            <>
+              <h1 className="mt-5 text-4xl text-white sm:text-5xl">Registration Submitted</h1>
+              <p className="mt-3 text-white/70">
+                {registrations.length} registration{registrations.length === 1 ? "" : "s"} saved —
+                pay by cash on your first day of camp.
               </p>
             </>
           ) : (
@@ -125,6 +145,9 @@ export default function ConfirmationPage() {
                       {line.schoolLocation && (
                         <span className="block text-xs text-muted-foreground">{line.schoolLocation}</span>
                       )}
+                      {line.programLocation && (
+                        <span className="block text-xs text-muted-foreground">{line.programLocation}</span>
+                      )}
                     </span>
                     <span className="font-medium text-navy">${line.price}</span>
                   </div>
@@ -134,7 +157,25 @@ export default function ConfirmationPage() {
           ))}
         </div>
 
-        {isStepUp ? (
+        {isInterested ? (
+          <div className="mt-6 rounded-sm border border-impact/30 bg-impact/5 p-5 text-sm leading-relaxed text-navy">
+            <p>
+              <strong>Thank you for expressing your interest!</strong>
+              <br />
+              No payment has been collected. Once FTK confirms the dates and opens registration for{" "}
+              {registrations.length === 1 ? "this program" : "these programs"}, we&apos;ll contact you
+              directly to complete your registration and payment.
+            </p>
+          </div>
+        ) : isCash ? (
+          <div className="mt-6 rounded-sm border border-impact/30 bg-impact/5 p-5 text-sm leading-relaxed text-navy">
+            <p>
+              <strong>Please bring the full cash payment (${total}) for all selected camp days on
+              your first day of camp.</strong> No payment has been collected yet — FTK will mark it
+              received once your cash payment arrives on-site.
+            </p>
+          </div>
+        ) : isStepUp ? (
           <div className="mt-6 rounded-sm border border-border bg-muted/40 p-5 text-sm leading-relaxed text-navy">
             <p>
               Your registration has been saved with <strong>Step Up For Students</strong> selected

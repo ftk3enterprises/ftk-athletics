@@ -1,16 +1,21 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { programs } from "@/data/programs";
 
 /**
- * Records a family's choice to pay via Step Up For Students on one of their
- * own pending registrations. This is the only transition this route allows
- * — it never creates a Stripe Checkout Session, never marks the
- * registration paid, and is not a discount. `step_up` just means the
- * family intends to fund the registration through their official EMA
- * Step Up account; FTK still has to confirm the funds separately. Moving
- * to "online" (or any other value) isn't exposed here, since that's the
- * column's default and the only real "set" a client should ever trigger.
+ * Records a family's choice to pay via Step Up For Students, or cash on the
+ * first day, on one of their own pending registrations. This is the only
+ * transition this route allows — it never creates a Stripe Checkout
+ * Session, never marks the registration paid, and is not a discount.
+ * `step_up` means the family intends to fund the registration through
+ * their official EMA Step Up account; `cash` means they'll pay in person
+ * (only offered for programs flagged cashPaymentEligible — see
+ * src/data/programs.ts). Either way FTK still has to confirm the funds
+ * separately (cash via POST /api/admin/registrations/[id]/collect-cash).
+ * Moving to "online" (or any other value) isn't exposed here, since that's
+ * the column's default and the only real "set" a client should ever
+ * trigger.
  *
  * `registrations` has no client-write privilege at all as of migration
  * 0006, so this route — using the service-role client, after verifying
@@ -32,7 +37,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid request." }, { status: 400 });
   }
   const { registrationId, paymentMethod } = body;
-  if (!registrationId || paymentMethod !== "step_up") {
+  if (!registrationId || (paymentMethod !== "step_up" && paymentMethod !== "cash")) {
     return NextResponse.json({ error: "Invalid request." }, { status: 400 });
   }
 
@@ -51,7 +56,7 @@ export async function POST(request: NextRequest) {
 
   const { data: registration, error: registrationError } = await admin
     .from("registrations")
-    .select("id, family_id, status")
+    .select("id, family_id, status, program_id")
     .eq("id", registrationId)
     .maybeSingle();
   if (registrationError) {
@@ -67,10 +72,16 @@ export async function POST(request: NextRequest) {
       { status: 409 }
     );
   }
+  if (paymentMethod === "cash") {
+    const program = programs.find((p) => p.id === registration.program_id);
+    if (!program?.cashPaymentEligible) {
+      return NextResponse.json({ error: "Cash payment isn't offered for this program." }, { status: 409 });
+    }
+  }
 
   const { data: updated, error: updateError } = await admin
     .from("registrations")
-    .update({ payment_method: "step_up" })
+    .update({ payment_method: paymentMethod })
     .eq("id", registrationId)
     .select()
     .single();

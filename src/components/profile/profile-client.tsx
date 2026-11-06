@@ -9,12 +9,41 @@ import { ChildrenManager } from "@/components/profile/children-manager";
 import { RegistrationsList } from "@/components/profile/registrations-list";
 import { WaiverReviewForm } from "@/components/profile/waiver-review-form";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { programs } from "@/data/programs";
 
 export function ProfileClient({ redirectTo }: { redirectTo?: string }) {
-  const { user, family, isLoading, refreshFamily } = useAuth();
+  const { user, family, isLoading, refreshFamily, updatePreferences } = useAuth();
   const router = useRouter();
   const [isReviewingWaiver, setIsReviewingWaiver] = useState(false);
+  const [interestedInCoaching, setInterestedInCoaching] = useState(false);
+  const [interestedInVolunteering, setInterestedInVolunteering] = useState(false);
+  const [interestedInSponsorship, setInterestedInSponsorship] = useState(false);
+  const [isSavingPreferences, setIsSavingPreferences] = useState(false);
+  const [preferencesSaved, setPreferencesSaved] = useState(false);
+  // `undefined` means "never synced yet"; adjusted directly during render
+  // (React's documented pattern for resetting state when an input changes)
+  // rather than in an effect, so loading or just-created family preferences
+  // show up immediately without an extra render.
+  const [syncedFamilyId, setSyncedFamilyId] = useState<string | null | undefined>(undefined);
+
+  if (family && syncedFamilyId !== family.id) {
+    setSyncedFamilyId(family.id);
+    setInterestedInCoaching(family.interestedInCoaching);
+    setInterestedInVolunteering(family.interestedInVolunteering);
+    setInterestedInSponsorship(family.interestedInSponsorship);
+  }
+
+  async function handleSavePreferences() {
+    setIsSavingPreferences(true);
+    setPreferencesSaved(false);
+    try {
+      await updatePreferences({ interestedInCoaching, interestedInVolunteering, interestedInSponsorship });
+      setPreferencesSaved(true);
+    } finally {
+      setIsSavingPreferences(false);
+    }
+  }
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -109,6 +138,57 @@ export function ProfileClient({ redirectTo }: { redirectTo?: string }) {
                 )}
               </>
             )}
+          </div>
+        </section>
+
+        <section>
+          <h2 className="text-2xl">Get Involved</h2>
+          <div className="mt-4 space-y-3 rounded-sm border border-border p-5">
+            <label className="flex items-center gap-2.5 text-sm text-navy">
+              <Checkbox
+                checked={interestedInCoaching}
+                onCheckedChange={(checked) => {
+                  setInterestedInCoaching(checked === true);
+                  setPreferencesSaved(false);
+                }}
+              />
+              I&apos;m interested in coaching
+            </label>
+            <label className="flex items-center gap-2.5 text-sm text-navy">
+              <Checkbox
+                checked={interestedInVolunteering}
+                onCheckedChange={(checked) => {
+                  setInterestedInVolunteering(checked === true);
+                  setPreferencesSaved(false);
+                }}
+              />
+              I&apos;m interested in volunteering on game days
+            </label>
+            <label className="flex items-center gap-2.5 text-sm text-navy">
+              <Checkbox
+                checked={interestedInSponsorship}
+                onCheckedChange={(checked) => {
+                  setInterestedInSponsorship(checked === true);
+                  setPreferencesSaved(false);
+                }}
+              />
+              I&apos;m interested in becoming a sponsor
+            </label>
+            <div className="flex items-center gap-3 pt-1">
+              <Button
+                onClick={handleSavePreferences}
+                disabled={isSavingPreferences}
+                className="rounded-sm bg-navy font-heading hover:bg-navy/90"
+              >
+                {isSavingPreferences ? "Saving..." : "Save Preferences"}
+              </Button>
+              {preferencesSaved && (
+                <span className="flex items-center gap-1.5 text-sm text-carolina">
+                  <CheckCircle2 className="size-4" aria-hidden />
+                  Saved
+                </span>
+              )}
+            </div>
           </div>
         </section>
 

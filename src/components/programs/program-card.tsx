@@ -62,13 +62,22 @@ export function ProgramCard({ program }: { program: Program }) {
             View Program
             <ArrowRight className="size-3.5" aria-hidden />
           </Link>
-          {program.registrationOpen && (
+          {program.registrationOpen ? (
             <Link
               href={`/register?program=${program.slug}`}
               className="ml-auto inline-flex items-center rounded-sm bg-impact px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-impact-foreground transition-colors hover:bg-impact/90"
             >
               Register
             </Link>
+          ) : (
+            program.allowsInterest && (
+              <Link
+                href={`/register?program=${program.slug}`}
+                className="ml-auto inline-flex items-center rounded-sm bg-navy px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-white transition-colors hover:bg-navy/90"
+              >
+                I&apos;m Interested
+              </Link>
+            )
           )}
         </div>
       </div>

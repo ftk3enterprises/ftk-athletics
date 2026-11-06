@@ -16,6 +16,8 @@ interface RegistrationRow {
   waiver_accepted_at: string | null;
   payment_id: string | null;
   payment_method: Registration["paymentMethod"];
+  cash_collected_at: string | null;
+  step_up_received_at: string | null;
   created_at: string;
   rate_type: Registration["rateType"];
   selected_dates: string[] | null;
@@ -38,6 +40,8 @@ function toRegistration(row: RegistrationRow): Registration {
     waiverAcceptedAt: row.waiver_accepted_at,
     paymentId: row.payment_id,
     paymentMethod: row.payment_method,
+    cashCollectedAt: row.cash_collected_at,
+    stepUpReceivedAt: row.step_up_received_at,
     createdAt: row.created_at,
     rateType: row.rate_type ?? null,
     selectedDates: row.selected_dates ?? null,

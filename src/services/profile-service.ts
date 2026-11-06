@@ -19,6 +19,9 @@ interface FamilyRow {
   email: string;
   phone: string;
   interested_program_ids: string[] | null;
+  interested_coaching: boolean;
+  interested_volunteering: boolean;
+  interested_sponsorship: boolean;
   waiver_accepted: boolean;
   waiver_accepted_at: string | null;
   waiver_version: string | null;
@@ -49,6 +52,9 @@ function toFamily(row: FamilyRow): Family {
     phone: row.phone,
     children: (row.children ?? []).map(toChild),
     interestedProgramIds: row.interested_program_ids ?? [],
+    interestedInCoaching: row.interested_coaching,
+    interestedInVolunteering: row.interested_volunteering,
+    interestedInSponsorship: row.interested_sponsorship,
     waiver: {
       familyId: row.id,
       accepted: row.waiver_accepted,
@@ -76,6 +82,9 @@ export async function createFamily(input: {
   email: string;
   phone: string;
   interestedProgramIds?: string[];
+  interestedInCoaching?: boolean;
+  interestedInVolunteering?: boolean;
+  interestedInSponsorship?: boolean;
 }): Promise<Family> {
   const existing = await getFamilyByUserId(input.userId);
   if (existing) return existing;
@@ -89,12 +98,41 @@ export async function createFamily(input: {
       email: input.email,
       phone: input.phone,
       interested_program_ids: input.interestedProgramIds ?? [],
+      interested_coaching: input.interestedInCoaching ?? false,
+      interested_volunteering: input.interestedInVolunteering ?? false,
+      interested_sponsorship: input.interestedInSponsorship ?? false,
       waiver_version: LIABILITY_WAIVER_VERSION,
     })
     .select(FAMILY_SELECT)
     .single();
   if (error) throw new Error(error.message);
   return toFamily(data as unknown as FamilyRow);
+}
+
+/**
+ * Updates the three optional involvement preferences from My Profile.
+ * Writable directly by the owning family's own client — see the
+ * column-level grant added alongside these columns in migration 0007.
+ */
+export async function updateFamilyPreferences(
+  familyId: string,
+  input: {
+    interestedInCoaching: boolean;
+    interestedInVolunteering: boolean;
+    interestedInSponsorship: boolean;
+  }
+): Promise<Family> {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("families")
+    .update({
+      interested_coaching: input.interestedInCoaching,
+      interested_volunteering: input.interestedInVolunteering,
+      interested_sponsorship: input.interestedInSponsorship,
+    })
+    .eq("id", familyId);
+  if (error) throw new Error(error.message);
+  return getFamilyByIdOrThrow(familyId);
 }
 
 export async function addChild(

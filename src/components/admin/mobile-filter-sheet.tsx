@@ -14,6 +14,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   PAYMENT_STATUS_OPTIONS,
+  REGISTRATION_STATUS_OPTIONS,
   REQUEST_OPTIONS,
   countActiveFilters,
   type AdminFilterSelections,
@@ -120,7 +121,9 @@ export function MobileFilterSheet({ programOptions, filters, onApply }: MobileFi
             <div className="flex items-center gap-4">
               <button
                 type="button"
-                onClick={() => setDraft({ programs: [], paymentStatuses: [], requests: [] })}
+                onClick={() =>
+                  setDraft({ programs: [], paymentStatuses: [], registrationStatuses: [], requests: [] })
+                }
                 className="text-sm font-semibold text-impact"
               >
                 Clear All
@@ -150,6 +153,14 @@ export function MobileFilterSheet({ programOptions, filters, onApply }: MobileFi
               selected={draft.paymentStatuses}
               onToggle={(v) => toggleIn("paymentStatuses", v)}
               onSelectAll={() => setDraft((prev) => ({ ...prev, paymentStatuses: [] }))}
+            />
+            <FilterCheckboxGroup
+              title="Registration Status"
+              allLabel="All Registration Statuses"
+              options={REGISTRATION_STATUS_OPTIONS}
+              selected={draft.registrationStatuses}
+              onToggle={(v) => toggleIn("registrationStatuses", v)}
+              onSelectAll={() => setDraft((prev) => ({ ...prev, registrationStatuses: [] }))}
             />
             <FilterCheckboxGroup
               title="Requests"

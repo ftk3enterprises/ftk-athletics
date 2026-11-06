@@ -21,11 +21,20 @@ export interface AdminRegistrationRow {
   amount: number;
   paymentStatus: PaymentStatus | "pending";
   paymentMethod: RegistrationPaymentMethod;
+  /** Only meaningful when paymentMethod is "cash" — null until an admin marks it collected. */
+  cashCollectedAt: string | null;
+  /** Only meaningful when paymentMethod is "step_up" — null until an admin marks the funds received. */
+  stepUpReceivedAt: string | null;
   registrationStatus: string;
   cancellationRequested: boolean;
   cancellationReason: string | null;
   preferredResolution: CancellationResolution | null;
   cancellationRequestDate: string | null;
+  /** Program names the family flagged as interested in during profile setup — separate from, and may be empty even when, registrationStatus is "interested". */
+  familyInterestedPrograms: string[];
+  interestedInCoaching: boolean;
+  interestedInVolunteering: boolean;
+  interestedInSponsorship: boolean;
 }
 
 function getProgramById(programId: string) {
@@ -43,7 +52,9 @@ export async function listAdminRegistrations(): Promise<AdminRegistrationRow[]> 
 
   const { data: registrations, error } = await supabase
     .from("registrations")
-    .select("*, families(parent_name, email, phone)")
+    .select(
+      "*, families(parent_name, email, phone, interested_program_ids, interested_coaching, interested_volunteering, interested_sponsorship)"
+    )
     .order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
   if (!registrations || registrations.length === 0) return [];
@@ -85,7 +96,15 @@ export async function listAdminRegistrations(): Promise<AdminRegistrationRow[]> 
 
   return registrations.map((registration) => {
     const program = getProgramById(registration.program_id as string);
-    const family = registration.families as { parent_name: string; email: string; phone: string } | null;
+    const family = registration.families as {
+      parent_name: string;
+      email: string;
+      phone: string;
+      interested_program_ids: string[] | null;
+      interested_coaching: boolean;
+      interested_volunteering: boolean;
+      interested_sponsorship: boolean;
+    } | null;
     const child = childById.get(registration.participant_id as string);
     const paymentId = registration.payment_id as string | null;
     const cancellation = cancellationByRegistrationId.get(registration.id as string);
@@ -106,11 +125,19 @@ export async function listAdminRegistrations(): Promise<AdminRegistrationRow[]> 
       amount: Number(registration.price),
       paymentStatus: paymentId ? (paymentStatusById.get(paymentId) ?? "pending") : "pending",
       paymentMethod: registration.payment_method as RegistrationPaymentMethod,
+      cashCollectedAt: (registration.cash_collected_at as string | null) ?? null,
+      stepUpReceivedAt: (registration.step_up_received_at as string | null) ?? null,
       registrationStatus: registration.status as string,
       cancellationRequested: Boolean(cancellation),
       cancellationReason: (cancellation?.reason as string) ?? null,
       preferredResolution: (cancellation?.preferred_resolution as CancellationResolution) ?? null,
       cancellationRequestDate: (cancellation?.created_at as string) ?? null,
+      familyInterestedPrograms: (family?.interested_program_ids ?? [])
+        .map((id) => getProgramById(id)?.name)
+        .filter((name): name is string => Boolean(name)),
+      interestedInCoaching: family?.interested_coaching ?? false,
+      interestedInVolunteering: family?.interested_volunteering ?? false,
+      interestedInSponsorship: family?.interested_sponsorship ?? false,
     } satisfies AdminRegistrationRow;
   });
 }
@@ -138,11 +165,17 @@ export interface AdminExportRow {
   amount: number;
   paymentMethod: RegistrationPaymentMethod;
   paymentStatus: PaymentStatus | "pending";
+  cashCollectedAt: string | null;
+  stepUpReceivedAt: string | null;
   registrationStatus: string;
   cancellationStatus: "Cancellation Requested" | "";
   preferredResolution: CancellationResolution | null;
   cancellationReason: string | null;
   requestDate: string | null;
+  familyInterestedPrograms: string[];
+  interestedInCoaching: boolean;
+  interestedInVolunteering: boolean;
+  interestedInSponsorship: boolean;
 }
 
 /**
@@ -155,7 +188,9 @@ export async function listAdminExportRows(): Promise<AdminExportRow[]> {
 
   const { data: registrations, error } = await supabase
     .from("registrations")
-    .select("*, families(parent_name, email, phone)")
+    .select(
+      "*, families(parent_name, email, phone, interested_program_ids, interested_coaching, interested_volunteering, interested_sponsorship)"
+    )
     .order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
   if (!registrations || registrations.length === 0) return [];
@@ -192,7 +227,15 @@ export async function listAdminExportRows(): Promise<AdminExportRow[]> {
 
   return registrations.map((registration) => {
     const program = getProgramById(registration.program_id as string);
-    const family = registration.families as { parent_name: string; email: string; phone: string } | null;
+    const family = registration.families as {
+      parent_name: string;
+      email: string;
+      phone: string;
+      interested_program_ids: string[] | null;
+      interested_coaching: boolean;
+      interested_volunteering: boolean;
+      interested_sponsorship: boolean;
+    } | null;
     const child = childById.get(registration.participant_id as string);
     const paymentId = registration.payment_id as string | null;
     const cancellation = cancellationByRegistrationId.get(registration.id as string);
@@ -222,11 +265,19 @@ export async function listAdminExportRows(): Promise<AdminExportRow[]> {
       amount: Number(registration.price),
       paymentMethod: registration.payment_method as RegistrationPaymentMethod,
       paymentStatus: paymentId ? (paymentStatusById.get(paymentId) ?? "pending") : "pending",
+      cashCollectedAt: (registration.cash_collected_at as string | null) ?? null,
+      stepUpReceivedAt: (registration.step_up_received_at as string | null) ?? null,
       registrationStatus: registration.status as string,
       cancellationStatus: cancellation ? "Cancellation Requested" : "",
       preferredResolution: (cancellation?.preferred_resolution as CancellationResolution) ?? null,
       cancellationReason: (cancellation?.reason as string) ?? null,
       requestDate: (cancellation?.created_at as string) ?? null,
+      familyInterestedPrograms: (family?.interested_program_ids ?? [])
+        .map((id) => getProgramById(id)?.name)
+        .filter((name): name is string => Boolean(name)),
+      interestedInCoaching: family?.interested_coaching ?? false,
+      interestedInVolunteering: family?.interested_volunteering ?? false,
+      interestedInSponsorship: family?.interested_sponsorship ?? false,
     } satisfies AdminExportRow;
   });
 }

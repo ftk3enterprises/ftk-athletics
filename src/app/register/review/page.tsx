@@ -23,6 +23,7 @@ interface Line {
   sessionDateRange: string | null;
   price: number;
   schoolLocation: string | null;
+  programLocation: string | null;
   rateType: "daily" | "weekly" | null;
   selectedDates: string[] | null;
   selectedWeeks: ProgramWeek[] | null;
@@ -83,6 +84,7 @@ export default function ReviewPage() {
             sessionDateRange,
             price,
             schoolLocation: draft.schoolSelections[schoolSelectionKey(participantId, programId)] ?? null,
+            programLocation: program.location,
             rateType,
             selectedDates,
             selectedWeeks,
@@ -123,6 +125,16 @@ export default function ReviewPage() {
 
   const total = lines.reduce((sum, line) => sum + line.price, 0);
 
+  // Guaranteed all-or-nothing: an interest draft only ever seeds one Coming
+  // Soon program (see register/programs/page.tsx's skip-to-schedule logic),
+  // so either every line here is an interest submission or none are.
+  const isInterestOnly =
+    lines.length > 0 &&
+    lines.every((line) => {
+      const program = programs.find((p) => p.id === line.programId);
+      return Boolean(program && !program.registrationOpen && program.allowsInterest);
+    });
+
   if (!user || !family || lines.length === 0 || !family.waiver.accepted) return null;
 
   async function handleContinue() {
@@ -140,7 +152,8 @@ export default function ReviewPage() {
         }))
       );
       setRegistrationIds(created.map((r) => r.id));
-      router.push("/register/payment");
+      const allInterested = created.every((r) => r.status === "interested");
+      router.push(allInterested ? "/register/confirmation" : "/register/payment");
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Something went wrong creating your registrations. Please try again."
@@ -175,6 +188,9 @@ export default function ReviewPage() {
                       {line.schoolLocation && (
                         <span className="block text-xs text-muted-foreground">{line.schoolLocation}</span>
                       )}
+                      {line.programLocation && (
+                        <span className="block text-xs text-muted-foreground">{line.programLocation}</span>
+                      )}
                       {line.priceBreakdownLabel && (
                         <span className="block text-xs text-muted-foreground">{line.priceBreakdownLabel}</span>
                       )}
@@ -196,8 +212,22 @@ export default function ReviewPage() {
           <span className="text-sm text-muted-foreground">
             {lines.length} registration{lines.length === 1 ? "" : "s"}
           </span>
-          <span className="text-2xl text-navy">Total ${total}</span>
+          {isInterestOnly ? (
+            <span className="text-right">
+              <span className="block text-2xl text-navy">Est. ${total}</span>
+              <span className="block text-xs text-muted-foreground">Not charged today</span>
+            </span>
+          ) : (
+            <span className="text-2xl text-navy">Total ${total}</span>
+          )}
         </div>
+
+        {isInterestOnly && (
+          <p className="mt-4 rounded-sm border border-impact/30 bg-impact/5 p-4 text-sm text-navy">
+            <strong>Expressing interest does not guarantee a spot.</strong> We&apos;ll reach out once
+            registration officially opens — no payment is collected now.
+          </p>
+        )}
 
         {error && <p className="mt-4 text-sm text-impact">{error}</p>}
 
@@ -214,7 +244,13 @@ export default function ReviewPage() {
             disabled={busy}
             className="h-12 rounded-sm bg-impact font-heading text-base text-impact-foreground hover:bg-impact/90 sm:w-fit sm:px-10"
           >
-            {busy ? "Preparing Checkout..." : "Continue To Payment"}
+            {isInterestOnly
+              ? busy
+                ? "Submitting..."
+                : "Submit Interest"
+              : busy
+                ? "Preparing Checkout..."
+                : "Continue To Payment"}
           </Button>
         </div>
       </div>

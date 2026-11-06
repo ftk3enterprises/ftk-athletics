@@ -48,9 +48,19 @@ export interface Program {
   spotsRemaining: number | null;
   registrationStatus: RegistrationStatus;
   registrationOpen: boolean;
+  /**
+   * Coming Soon programs only: lets a visitor click "I'm Interested /
+   * Reserve a Spot" to go through the registration flow (participant info +
+   * waiver, no payment) and land as a Registration with status
+   * "interested" instead of being blocked outright. Never set alongside
+   * registrationOpen: true — open programs always register normally.
+   */
+  allowsInterest?: boolean;
   featured: boolean;
   /** Whether Step Up For Students scholarship funds can be used toward this program. */
   stepUpEligible: boolean;
+  /** Whether paying cash on the first day (instead of card/Step Up) is offered for this program — currently just the daily/weekly-rate camps. */
+  cashPaymentEligible?: boolean;
   /**
    * The purchasable periods within this program (a week of camp, a month of
    * a recurring clinic, a whole season, a single event date). Always has at
@@ -219,6 +229,10 @@ export interface Family {
   waiver: Waiver;
   /** Program ids the family flagged as interested in during profile setup. */
   interestedProgramIds: string[];
+  /** Optional involvement preferences, set at profile setup and editable later from My Profile. */
+  interestedInCoaching: boolean;
+  interestedInVolunteering: boolean;
+  interestedInSponsorship: boolean;
 }
 
 export type PaymentStatus = "pending" | "paid" | "failed" | "refunded";
@@ -236,15 +250,19 @@ export interface Payment {
 export type RegistrationRecordStatus =
   | "pending_payment"
   | "confirmed"
-  | "cancelled";
+  | "cancelled"
+  /** Created via a Coming Soon program's "I'm Interested / Reserve a Spot" flow — never charged, never a guaranteed spot. */
+  | "interested";
 
 /**
  * "online" charges a card through the (future) payment processor. "step_up"
  * means the family intends to pay with Step Up For Students scholarship
  * funds — handled entirely outside this app, so it never gets a Payment
- * record or an invented approval/funding status.
+ * record or an invented approval/funding status. "cash" means the family
+ * will pay in person on the first day — also never gets a Payment record;
+ * see Registration.cashCollectedAt for when an admin confirms it arrived.
  */
-export type RegistrationPaymentMethod = "online" | "step_up";
+export type RegistrationPaymentMethod = "online" | "step_up" | "cash";
 
 export interface Registration {
   id: string;
@@ -266,6 +284,10 @@ export interface Registration {
   waiverAcceptedAt: string | null;
   paymentId: string | null;
   createdAt: string;
+  /** Set once an admin confirms a cash payment was physically collected — only meaningful when paymentMethod is "cash". */
+  cashCollectedAt: string | null;
+  /** Set once an admin confirms Step Up scholarship funds actually arrived — only meaningful when paymentMethod is "step_up". */
+  stepUpReceivedAt: string | null;
   /** Set only when the session had a DateSelectionConfig (a per-day/per-week rate). */
   rateType: "daily" | "weekly" | null;
   /** rateType "daily": the exact individual dates (ISO) this registration covers. */

@@ -33,6 +33,8 @@ interface RegistrationRow {
   waiver_accepted_at: string | null;
   payment_id: string | null;
   payment_method: Registration["paymentMethod"];
+  cash_collected_at: string | null;
+  step_up_received_at: string | null;
   created_at: string;
   rate_type: Registration["rateType"];
   selected_dates: string[] | null;
@@ -55,6 +57,8 @@ function toRegistration(row: RegistrationRow): Registration {
     waiverAcceptedAt: row.waiver_accepted_at,
     paymentId: row.payment_id,
     paymentMethod: row.payment_method,
+    cashCollectedAt: row.cash_collected_at,
+    stepUpReceivedAt: row.step_up_received_at,
     createdAt: row.created_at,
     rateType: row.rate_type ?? null,
     selectedDates: row.selected_dates ?? null,
@@ -166,6 +170,7 @@ export async function POST(request: NextRequest) {
     session_id: string;
     session_label: string;
     session_date_range: string | null;
+    status: Registration["status"];
     price: number;
     school_location: string | null;
     waiver_accepted_at: string | null;
@@ -198,12 +203,16 @@ export async function POST(request: NextRequest) {
     if (!program || !session) {
       return NextResponse.json({ error: "Program or session not found." }, { status: 400 });
     }
-    if (!program.registrationOpen || !session.registrationOpen) {
+    // Coming Soon programs flagged allowsInterest skip the normal
+    // registrationOpen gate entirely — see the "interested" branch below,
+    // which creates the row with no payment required instead of blocking.
+    if (!program.allowsInterest && (!program.registrationOpen || !session.registrationOpen)) {
       return NextResponse.json(
         { error: `${program.name} isn't open for registration yet.` },
         { status: 409 }
       );
     }
+    const isInterestSubmission = !program.registrationOpen && program.allowsInterest === true;
     // School-based sessions (After School Program) are only real once a
     // school's 4-week block has exactly four confirmed class dates — this
     // mirrors the client-side filtering in AfterSchoolScheduleBlock, but is
@@ -225,7 +234,11 @@ export async function POST(request: NextRequest) {
     if (!isIncrementalDaily) {
       if (existingKeys.has(dupeKey) || seenInThisRequest.has(dupeKey)) {
         return NextResponse.json(
-          { error: `${participantName} is already registered for ${program.name} — ${session.label}.` },
+          {
+            error: isInterestSubmission
+              ? `${participantName} has already expressed interest in ${program.name}.`
+              : `${participantName} is already registered for ${program.name} — ${session.label}.`,
+          },
           { status: 409 }
         );
       }
@@ -285,6 +298,9 @@ export async function POST(request: NextRequest) {
       session_id: session.id,
       session_label: session.label,
       session_date_range: sessionDateRange,
+      // Explicit rather than relying on the column default, since this is
+      // the one place a non-default status ("interested") is ever written.
+      status: isInterestSubmission ? "interested" : "pending_payment",
       price,
       school_location: program.requiresSchoolSelection ? (line.schoolLocation ?? null) : null,
       waiver_accepted_at: family.waiver_accepted_at,
