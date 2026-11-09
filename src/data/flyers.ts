@@ -52,16 +52,16 @@ export const FLYERS: LeagueFlyer[] = [
     eyebrow: "FTK Athletics",
     title: "Youth Kickball League",
     supportingText: "Ages 4–12 · Saturdays · Turner Park at Skye Ranch",
-    flyerSrc: "/about/ftk-youth-kickball-league-flyer.jpg",
+    flyerSrc: "/youth-kickball.png",
     flyerAlt:
       "FTK Youth Kickball League, Inaugural Season flyer — ages 4-6, 7-9, and 10-12, Saturday games at Turner Park at Skye Ranch",
-    flyerWidth: 768,
-    flyerHeight: 1024,
+    flyerWidth: 1086,
+    flyerHeight: 1448,
     // This flyer is the authoritative source for both pricing ($175/player,
-    // src/lib/pricing.ts KICKBALL_PRICE_PER_REGISTRATION) and the Dec 5 –
-    // Jan 16 schedule (src/data/schedule.ts, src/data/programs.ts) — an
-    // earlier season-schedule email had different dates; the client
-    // confirmed the flyer is correct.
+    // src/lib/pricing.ts KICKBALL_PRICE_PER_REGISTRATION) and the Jan 9 –
+    // Feb 6, 2027 schedule (src/data/schedule.ts, src/data/programs.ts) —
+    // replaces the original Dec 5, 2026 – Jan 16, 2027 flyer once the
+    // client pushed the season back 5 weeks.
     cta: { label: "Register Now", href: "/register?program=youth-kickball" },
     active: true,
   },

@@ -367,9 +367,9 @@ export const programs: Program[] = [
     location: KICKBALL_LOCATION,
     requiresSchoolSelection: false,
     // Confirmed per the official flyer — see src/data/schedule.ts.
-    scheduleDisplay: "Saturdays, 9:00 AM · 5-week Inaugural Season, Dec 5, 2026 – Jan 16, 2027",
-    startDate: "2026-12-05",
-    endDate: "2027-01-16",
+    scheduleDisplay: "Saturdays, 9:00 AM · 5-week Inaugural Season, Jan 9 – Feb 6, 2027",
+    startDate: "2027-01-09",
+    endDate: "2027-02-06",
     ageRange: "Ages 4–12 (divisions: 4-6 [must be 4, turning 5], 7-9, 10-12)",
     gradeRange: null,
     price: KICKBALL_PRICE_PER_REGISTRATION,
@@ -385,12 +385,17 @@ export const programs: Program[] = [
     sessionSelectionMode: "single",
     sessions: [
       {
+        // Id kept stable (not re-dated) even though the season moved —
+        // existing registrations store this exact id as their session_id,
+        // and renaming it would orphan them. Only the display fields below
+        // (dateRange/startDate/endDate) reflect the updated Jan 9 – Feb 6
+        // schedule.
         id: "youth-kickball-inaugural-2026",
         programId: "youth-kickball",
         label: "Inaugural Season",
-        dateRange: "Saturdays · Dec 5, 2026 – Jan 16, 2027",
-        startDate: "2026-12-05",
-        endDate: "2027-01-16",
+        dateRange: "Saturdays · Jan 9 – Feb 6, 2027",
+        startDate: "2027-01-09",
+        endDate: "2027-02-06",
         price: KICKBALL_PRICE_PER_REGISTRATION,
         priceIsDemo: false,
         capacity: null,
