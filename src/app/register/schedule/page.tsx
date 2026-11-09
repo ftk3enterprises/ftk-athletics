@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { programs } from "@/data/programs";
 import { formatProgramPriceDisplay } from "@/lib/pricing";
 import * as registrationService from "@/services/registration-service";
-import { resolveParticipant, type ParticipantKind, type ResolvedParticipant } from "@/lib/participants";
+import { isProgramCompatible, resolveParticipant, type ResolvedParticipant } from "@/lib/participants";
 import type { Program, ProgramSession, Registration } from "@/types";
 
 function isDateSelectionComplete(value: DateSelectionValue | undefined): boolean {
@@ -25,11 +25,6 @@ function isDateSelectionComplete(value: DateSelectionValue | undefined): boolean
 }
 
 type Participant = ResolvedParticipant;
-
-function isCompatible(program: Program, kind: ParticipantKind) {
-  if (program.participantType === "family") return true;
-  return kind === "child" ? program.participantType === "youth" : program.participantType === "adult";
-}
 
 export default function SchedulePage() {
   const { user, family } = useAuth();
@@ -210,7 +205,7 @@ export default function SchedulePage() {
 
         <div className="mt-6 space-y-6">
           {participants.map((participant) => {
-            const compatiblePrograms = selectedPrograms.filter((program) => isCompatible(program, participant.kind));
+            const compatiblePrograms = selectedPrograms.filter((program) => isProgramCompatible(program, participant.kind));
             return (
               <div key={participant.id} className="rounded-sm border border-border bg-card p-5">
                 <div className="flex items-center gap-3">

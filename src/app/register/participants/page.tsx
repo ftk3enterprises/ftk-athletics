@@ -17,27 +17,30 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { TSHIRT_SIZE_OPTIONS } from "@/data/tshirt-sizes";
-import { resolveParticipant } from "@/lib/participants";
+import { tshirtSizeOptionsFor } from "@/data/tshirt-sizes";
+import { resolveParticipant, type ParticipantKind } from "@/lib/participants";
 import * as profileService from "@/services/profile-service";
 import type { TShirtSize } from "@/types";
 
 function TshirtSizeSelect({
+  kind,
   value,
   onChange,
 }: {
+  kind: ParticipantKind;
   value: TShirtSize | null;
   onChange: (value: TShirtSize) => void;
 }) {
+  const options = tshirtSizeOptionsFor(kind);
   return (
     <Select value={value ?? ""} onValueChange={(v) => v && onChange(v as TShirtSize)}>
       <SelectTrigger className="h-9 w-full text-sm sm:w-48">
         <SelectValue placeholder="Select T-shirt size">
-          {(v: string | null) => TSHIRT_SIZE_OPTIONS.find((s) => s.value === v)?.label ?? ""}
+          {(v: string | null) => options.find((s) => s.value === v)?.label ?? ""}
         </SelectValue>
       </SelectTrigger>
       <SelectContent>
-        {TSHIRT_SIZE_OPTIONS.map((size) => (
+        {options.map((size) => (
           <SelectItem key={size.value} value={size.value}>
             {size.label}
           </SelectItem>
@@ -105,6 +108,7 @@ export default function ParticipantsPage() {
             </label>
             {draft.participantIds.includes("self") && (
               <TshirtSizeSelect
+                kind="self"
                 value={family.tshirtSize}
                 onChange={(size) => profileService.updateFamilyTshirtSize(family!.id, size).then(refreshFamily)}
               />
@@ -131,6 +135,7 @@ export default function ParticipantsPage() {
               </label>
               {draft.participantIds.includes(child.id) && (
                 <TshirtSizeSelect
+                  kind="child"
                   value={child.tshirtSize}
                   onChange={(size) =>
                     profileService.updateChild(family!.id, child.id, { tshirtSize: size }).then(refreshFamily)
@@ -160,6 +165,7 @@ export default function ParticipantsPage() {
               </label>
               {draft.participantIds.includes(adult.id) && (
                 <TshirtSizeSelect
+                  kind="adult"
                   value={adult.tshirtSize}
                   onChange={(size) =>
                     profileService.updateAdult(family!.id, adult.id, { tshirtSize: size }).then(refreshFamily)

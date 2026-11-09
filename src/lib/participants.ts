@@ -1,4 +1,4 @@
-import type { Family, TShirtSize, User } from "@/types";
+import type { Family, Program, TShirtSize, User } from "@/types";
 
 export type ParticipantKind = "self" | "child" | "adult";
 
@@ -59,4 +59,18 @@ export function resolveParticipant(
     };
   }
   return null;
+}
+
+/**
+ * Whether a participant of the given kind is eligible to register for a
+ * program, based solely on Program.participantType — never a hardcoded
+ * program name/id, so a newly added adult/family program is automatically
+ * correct with no changes here. "self" and "adult" are both adults for
+ * this purpose; only "child" counts as youth. Shared by the client
+ * (registration UI) and the server (POST /api/registrations) so the rule
+ * can never drift between the two.
+ */
+export function isProgramCompatible(program: Program, kind: ParticipantKind): boolean {
+  if (program.participantType === "family") return true;
+  return kind === "child" ? program.participantType === "youth" : program.participantType === "adult";
 }

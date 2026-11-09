@@ -1,3 +1,4 @@
+import type { ParticipantKind } from "@/lib/participants";
 import type { TShirtSize } from "@/types";
 
 /**
@@ -24,4 +25,16 @@ export const TSHIRT_SIZE_OPTIONS: { value: TShirtSize; label: string; group: "Yo
 export function getTshirtSizeLabel(value: TShirtSize | null | undefined): string {
   if (!value) return "";
   return TSHIRT_SIZE_OPTIONS.find((s) => s.value === value)?.label ?? value;
+}
+
+/** Children always pick from youth sizes; the signed-in account holder and any added adult always pick from adult sizes. */
+export const YOUTH_TSHIRT_SIZE_OPTIONS = TSHIRT_SIZE_OPTIONS.filter((s) => s.group === "Youth");
+
+/** "adult-xs" is intentionally excluded here (no longer offered) but stays a valid stored value for backward compatibility — see getTshirtSizeLabel. */
+export const ADULT_TSHIRT_SIZE_OPTIONS = TSHIRT_SIZE_OPTIONS.filter(
+  (s) => s.group === "Adult" && s.value !== "adult-xs"
+);
+
+export function tshirtSizeOptionsFor(kind: ParticipantKind) {
+  return kind === "child" ? YOUTH_TSHIRT_SIZE_OPTIONS : ADULT_TSHIRT_SIZE_OPTIONS;
 }

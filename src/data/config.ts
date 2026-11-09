@@ -4,6 +4,16 @@
 /** External scholarship/financial-aid link for the "Step Up" nav item. */
 export const STEP_UP_URL = "https://www.stepupforstudents.org/";
 
+/**
+ * Single toggle to temporarily take Step Up For Students out of new
+ * registrations without touching anything else — existing Step Up
+ * registrations, the admin dashboard, Excel export, and the
+ * confirm-payment flow all keep working unchanged regardless of this flag
+ * (see /register/payment and POST /api/registrations/payment-method,
+ * the only two places that read it). Flip back to true to reactivate.
+ */
+export const STEP_UP_PAYMENT_ENABLED = false;
+
 export const CONTACT_EMAIL: string | null = "info@ftkathletics.com";
 export const CONTACT_PHONE: string | null = "941-685-9033";
 export const CONTACT_LOCATION: string | null = "Sarasota, Florida";

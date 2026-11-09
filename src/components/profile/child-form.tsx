@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { OTHER_SCHOOL_VALUE, SCHOOL_SELECT_OPTIONS } from "@/data/schools";
-import { TSHIRT_SIZE_OPTIONS } from "@/data/tshirt-sizes";
+import { YOUTH_TSHIRT_SIZE_OPTIONS } from "@/data/tshirt-sizes";
 import type { Child, TShirtSize } from "@/types";
 
 type ChildInput = {
@@ -124,11 +124,11 @@ export function ChildForm({
         <Select value={tshirtSize} onValueChange={(value) => setTshirtSize((value as TShirtSize) ?? "")}>
           <SelectTrigger id="tshirtSize" className="h-10 w-full">
             <SelectValue placeholder="Select a T-shirt size">
-              {(value: string | null) => TSHIRT_SIZE_OPTIONS.find((s) => s.value === value)?.label ?? ""}
+              {(value: string | null) => YOUTH_TSHIRT_SIZE_OPTIONS.find((s) => s.value === value)?.label ?? ""}
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
-            {TSHIRT_SIZE_OPTIONS.map((size) => (
+            {YOUTH_TSHIRT_SIZE_OPTIONS.map((size) => (
               <SelectItem key={size.value} value={size.value}>
                 {size.label}
               </SelectItem>

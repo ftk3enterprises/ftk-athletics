@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/auth-context";
 import { useRegistrationDraft } from "@/context/registration-draft-context";
 import { getProgramBySlug } from "@/data/programs";
+import { isProgramCompatible, type ParticipantKind } from "@/lib/participants";
 
 export function RegisterEntryClient({
   programSlug,
@@ -31,13 +32,23 @@ export function RegisterEntryClient({
     const programSeeded = Boolean(program?.registrationOpen || program?.allowsInterest);
     if (program && programSeeded) seedProgram(program.id);
 
-    const participantIsValid =
-      participantId === "self" ||
-      family.children.some((c) => c.id === participantId) ||
-      family.adults.some((a) => a.id === participantId);
-    if (participantId && participantIsValid) {
+    const participantKind: ParticipantKind | null =
+      participantId === "self"
+        ? "self"
+        : family.children.some((c) => c.id === participantId)
+          ? "child"
+          : family.adults.some((a) => a.id === participantId)
+            ? "adult"
+            : null;
+    if (participantId && participantKind) {
       seedParticipant(participantId);
-      if (programSeeded) seedAssignment(participantId, program!.id);
+      // Never seed an assignment the participant isn't eligible for (e.g. a
+      // deep link pairing a child with an adult-only program) — the
+      // Programs/Schedule steps would otherwise show a mismatched
+      // pre-selection that can't actually be completed.
+      if (programSeeded && isProgramCompatible(program!, participantKind)) {
+        seedAssignment(participantId, program!.id);
+      }
     }
 
     router.replace("/register/participants");

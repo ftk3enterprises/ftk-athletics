@@ -8,6 +8,7 @@ import { RegistrationHeader } from "@/components/registration/registration-heade
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { programs } from "@/data/programs";
+import { STEP_UP_PAYMENT_ENABLED } from "@/data/config";
 import * as registrationService from "@/services/registration-service";
 import * as paymentService from "@/services/payment-service";
 import type { Registration, RegistrationPaymentMethod } from "@/types";
@@ -61,6 +62,7 @@ export default function PaymentPage() {
   }
 
   async function handleStepUp() {
+    if (!STEP_UP_PAYMENT_ENABLED) return;
     setIsPaying(true);
     setError(null);
     try {
@@ -128,13 +130,21 @@ export default function PaymentPage() {
             </button>
             <button
               type="button"
-              onClick={() => setMethod("step_up")}
+              onClick={() => STEP_UP_PAYMENT_ENABLED && setMethod("step_up")}
+              disabled={!STEP_UP_PAYMENT_ENABLED}
               aria-pressed={method === "step_up"}
+              aria-disabled={!STEP_UP_PAYMENT_ENABLED}
               className={cn(
-                "flex h-full flex-col items-center gap-2 rounded-sm border p-4 text-center transition-colors",
-                method === "step_up" ? "border-impact bg-impact/5" : "border-border hover:border-navy/40"
+                "relative flex h-full flex-col items-center gap-2 rounded-sm border p-4 text-center transition-colors",
+                method === "step_up" ? "border-impact bg-impact/5" : "border-border hover:border-navy/40",
+                !STEP_UP_PAYMENT_ENABLED && "cursor-not-allowed opacity-60 hover:border-border"
               )}
             >
+              {!STEP_UP_PAYMENT_ENABLED && (
+                <span className="absolute right-2 top-2 rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  Coming Soon
+                </span>
+              )}
               <GraduationCap className="size-5 shrink-0 text-impact" aria-hidden />
               <span className="font-heading text-xs uppercase leading-snug text-navy sm:text-sm">
                 Step Up For Students

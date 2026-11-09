@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { programs } from "@/data/programs";
+import { STEP_UP_PAYMENT_ENABLED } from "@/data/config";
 
 /**
  * Records a family's choice to pay via Step Up For Students, or cash on the
@@ -39,6 +40,15 @@ export async function POST(request: NextRequest) {
   const { registrationId, paymentMethod } = body;
   if (!registrationId || (paymentMethod !== "step_up" && paymentMethod !== "cash")) {
     return NextResponse.json({ error: "Invalid request." }, { status: 400 });
+  }
+  // See STEP_UP_PAYMENT_ENABLED's doc comment — this is the single flag
+  // that blocks new Step Up selections; flipping it back to true is the
+  // entire reactivation. Existing step_up registrations are untouched.
+  if (paymentMethod === "step_up" && !STEP_UP_PAYMENT_ENABLED) {
+    return NextResponse.json(
+      { error: "Step Up For Students isn't available yet." },
+      { status: 409 }
+    );
   }
 
   const { data: family, error: familyError } = await supabase

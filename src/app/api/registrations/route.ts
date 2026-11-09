@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { programs } from "@/data/programs";
 import { calculateSessionPrice, resolveSelectedWeeks } from "@/lib/pricing";
 import { formatSelectedDatesLabel, formatSelectedWeeksLabel } from "@/lib/schedule-dates";
+import { isProgramCompatible, type ParticipantKind } from "@/lib/participants";
 import type { ProgramWeek, Registration } from "@/types";
 
 /** Generous but bounded — a real family registering many kids for many programs in one pass is normal; an unbounded array is not. */
@@ -201,18 +202,22 @@ export async function POST(request: NextRequest) {
     }
 
     let participantName: string;
+    let participantKind: ParticipantKind;
     let tshirtSize: Registration["tshirtSize"];
     if (participantId === user.id) {
       participantName = userName;
+      participantKind = "self";
       tshirtSize = (family.tshirt_size as Registration["tshirtSize"]) ?? null;
     } else {
       const child = childById.get(participantId);
       const adult = adultById.get(participantId);
       if (child) {
         participantName = `${child.first_name} ${child.last_name}`;
+        participantKind = "child";
         tshirtSize = (child.tshirt_size as Registration["tshirtSize"]) ?? null;
       } else if (adult) {
         participantName = `${adult.first_name} ${adult.last_name}`;
+        participantKind = "adult";
         tshirtSize = (adult.tshirt_size as Registration["tshirtSize"]) ?? null;
       } else {
         return NextResponse.json({ error: "Participant not found on this family." }, { status: 403 });
@@ -229,6 +234,16 @@ export async function POST(request: NextRequest) {
     const session = program?.sessions.find((s) => s.id === sessionId);
     if (!program || !session) {
       return NextResponse.json({ error: "Program or session not found." }, { status: 400 });
+    }
+    // Reuses the same Program.participantType rule the registration UI
+    // filters on (src/lib/participants.ts) — never a hardcoded program
+    // list — so stale/tampered client state can't register an adult for a
+    // youth-only program or vice versa.
+    if (!isProgramCompatible(program, participantKind)) {
+      return NextResponse.json(
+        { error: `${participantName} isn't eligible to register for ${program.name}.` },
+        { status: 403 }
+      );
     }
     // Coming Soon programs flagged allowsInterest skip the normal
     // registrationOpen gate entirely — see the "interested" branch below,

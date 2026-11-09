@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { TSHIRT_SIZE_OPTIONS } from "@/data/tshirt-sizes";
+import { ADULT_TSHIRT_SIZE_OPTIONS } from "@/data/tshirt-sizes";
 import type { FamilyAdult, TShirtSize } from "@/types";
 
 type AdultInput = {
@@ -63,11 +63,11 @@ export function AdultForm({
         <Select value={tshirtSize} onValueChange={(value) => setTshirtSize((value as TShirtSize) ?? "")}>
           <SelectTrigger id="adultTshirtSize" className="h-10 w-full">
             <SelectValue placeholder="Select a T-shirt size">
-              {(value: string | null) => TSHIRT_SIZE_OPTIONS.find((s) => s.value === value)?.label ?? ""}
+              {(value: string | null) => ADULT_TSHIRT_SIZE_OPTIONS.find((s) => s.value === value)?.label ?? ""}
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
-            {TSHIRT_SIZE_OPTIONS.map((size) => (
+            {ADULT_TSHIRT_SIZE_OPTIONS.map((size) => (
               <SelectItem key={size.value} value={size.value}>
                 {size.label}
               </SelectItem>
