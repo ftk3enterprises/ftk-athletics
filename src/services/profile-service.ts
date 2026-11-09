@@ -1,4 +1,4 @@
-import type { Child, Family } from "@/types";
+import type { Child, Family, FamilyAdult, TShirtSize } from "@/types";
 import { LIABILITY_WAIVER_VERSION } from "@/data/config";
 import { createClient } from "@/lib/supabase/client";
 
@@ -10,6 +10,15 @@ interface ChildRow {
   dob: string;
   grade: string | null;
   school: string | null;
+  tshirt_size: TShirtSize | null;
+}
+
+interface FamilyAdultRow {
+  id: string;
+  family_id: string;
+  first_name: string;
+  last_name: string;
+  tshirt_size: TShirtSize | null;
 }
 
 interface FamilyRow {
@@ -18,6 +27,7 @@ interface FamilyRow {
   parent_name: string;
   email: string;
   phone: string;
+  tshirt_size: TShirtSize | null;
   interested_program_ids: string[] | null;
   interested_coaching: boolean;
   interested_volunteering: boolean;
@@ -27,9 +37,10 @@ interface FamilyRow {
   waiver_version: string | null;
   waiver_withdrawn_at: string | null;
   children: ChildRow[] | null;
+  family_adults: FamilyAdultRow[] | null;
 }
 
-const FAMILY_SELECT = "*, children(*)";
+const FAMILY_SELECT = "*, children(*), family_adults(*)";
 
 function toChild(row: ChildRow): Child {
   return {
@@ -40,6 +51,17 @@ function toChild(row: ChildRow): Child {
     dob: row.dob,
     grade: row.grade ?? "",
     school: row.school ?? "",
+    tshirtSize: row.tshirt_size,
+  };
+}
+
+function toAdult(row: FamilyAdultRow): FamilyAdult {
+  return {
+    id: row.id,
+    familyId: row.family_id,
+    firstName: row.first_name,
+    lastName: row.last_name,
+    tshirtSize: row.tshirt_size,
   };
 }
 
@@ -51,6 +73,8 @@ function toFamily(row: FamilyRow): Family {
     email: row.email,
     phone: row.phone,
     children: (row.children ?? []).map(toChild),
+    adults: (row.family_adults ?? []).map(toAdult),
+    tshirtSize: row.tshirt_size,
     interestedProgramIds: row.interested_program_ids ?? [],
     interestedInCoaching: row.interested_coaching,
     interestedInVolunteering: row.interested_volunteering,
@@ -137,7 +161,7 @@ export async function updateFamilyPreferences(
 
 export async function addChild(
   familyId: string,
-  input: { firstName: string; lastName: string; dob: string; grade: string; school: string }
+  input: { firstName: string; lastName: string; dob: string; grade: string; school: string; tshirtSize: TShirtSize }
 ): Promise<Family> {
   const supabase = createClient();
   const { error } = await supabase.from("children").insert({
@@ -147,6 +171,7 @@ export async function addChild(
     dob: input.dob,
     grade: input.grade,
     school: input.school,
+    tshirt_size: input.tshirtSize,
   });
   if (error) throw new Error(error.message);
   return getFamilyByIdOrThrow(familyId);
@@ -155,15 +180,16 @@ export async function addChild(
 export async function updateChild(
   familyId: string,
   childId: string,
-  input: Partial<Pick<Child, "firstName" | "lastName" | "dob" | "grade" | "school">>
+  input: Partial<Pick<Child, "firstName" | "lastName" | "dob" | "grade" | "school" | "tshirtSize">>
 ): Promise<Family> {
   const supabase = createClient();
-  const patch: Record<string, string> = {};
+  const patch: Record<string, string | null> = {};
   if (input.firstName !== undefined) patch.first_name = input.firstName;
   if (input.lastName !== undefined) patch.last_name = input.lastName;
   if (input.dob !== undefined) patch.dob = input.dob;
   if (input.grade !== undefined) patch.grade = input.grade;
   if (input.school !== undefined) patch.school = input.school;
+  if (input.tshirtSize !== undefined) patch.tshirt_size = input.tshirtSize;
 
   const { error } = await supabase.from("children").update(patch).eq("id", childId);
   if (error) throw new Error(error.message);
@@ -173,6 +199,59 @@ export async function updateChild(
 export async function removeChild(familyId: string, childId: string): Promise<Family> {
   const supabase = createClient();
   const { error } = await supabase.from("children").delete().eq("id", childId);
+  if (error) throw new Error(error.message);
+  return getFamilyByIdOrThrow(familyId);
+}
+
+/**
+ * Sets the signed-in account holder's own T-shirt size — writable directly
+ * by the owning family's own client, same column-level grant pattern as
+ * updateFamilyPreferences (see migration 0010).
+ */
+export async function updateFamilyTshirtSize(familyId: string, tshirtSize: TShirtSize): Promise<Family> {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("families")
+    .update({ tshirt_size: tshirtSize })
+    .eq("id", familyId);
+  if (error) throw new Error(error.message);
+  return getFamilyByIdOrThrow(familyId);
+}
+
+export async function addAdult(
+  familyId: string,
+  input: { firstName: string; lastName: string; tshirtSize: TShirtSize }
+): Promise<Family> {
+  const supabase = createClient();
+  const { error } = await supabase.from("family_adults").insert({
+    family_id: familyId,
+    first_name: input.firstName,
+    last_name: input.lastName,
+    tshirt_size: input.tshirtSize,
+  });
+  if (error) throw new Error(error.message);
+  return getFamilyByIdOrThrow(familyId);
+}
+
+export async function updateAdult(
+  familyId: string,
+  adultId: string,
+  input: Partial<Pick<FamilyAdult, "firstName" | "lastName" | "tshirtSize">>
+): Promise<Family> {
+  const supabase = createClient();
+  const patch: Record<string, string | null> = {};
+  if (input.firstName !== undefined) patch.first_name = input.firstName;
+  if (input.lastName !== undefined) patch.last_name = input.lastName;
+  if (input.tshirtSize !== undefined) patch.tshirt_size = input.tshirtSize;
+
+  const { error } = await supabase.from("family_adults").update(patch).eq("id", adultId);
+  if (error) throw new Error(error.message);
+  return getFamilyByIdOrThrow(familyId);
+}
+
+export async function removeAdult(familyId: string, adultId: string): Promise<Family> {
+  const supabase = createClient();
+  const { error } = await supabase.from("family_adults").delete().eq("id", adultId);
   if (error) throw new Error(error.message);
   return getFamilyByIdOrThrow(familyId);
 }

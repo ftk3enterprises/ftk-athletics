@@ -15,6 +15,9 @@ const HEADERS = [
   "Parent/Guardian Name",
   "Parent Email",
   "Parent Phone",
+  "Participant Name",
+  "Participant Type",
+  "T-Shirt Size",
   "Child Name",
   "Child Date of Birth",
   "Child Grade",
@@ -102,7 +105,7 @@ export async function GET(request: Request) {
 
   const rows = allRows.filter((row) => {
     if (search) {
-      const haystack = `${row.parentName} ${row.childName ?? ""}`.toLowerCase();
+      const haystack = `${row.parentName} ${row.participantName}`.toLowerCase();
       if (!haystack.includes(search)) return false;
     }
     if (!matchesProgram(filters, row.programName)) return false;
@@ -118,21 +121,24 @@ export async function GET(request: Request) {
     [HEADERS[2]]: sanitizeCell(row.parentName),
     [HEADERS[3]]: sanitizeCell(row.parentEmail),
     [HEADERS[4]]: sanitizeCell(row.parentPhone),
-    [HEADERS[5]]: row.childName ? sanitizeCell(row.childName) : "",
-    [HEADERS[6]]: formatDate(row.childDob),
-    [HEADERS[7]]: row.childGrade ? sanitizeCell(row.childGrade) : "",
-    [HEADERS[8]]: row.currentSchool ? sanitizeCell(row.currentSchool) : "",
-    [HEADERS[9]]: sanitizeCell(row.programName),
-    [HEADERS[10]]: sanitizeCell(
+    [HEADERS[5]]: sanitizeCell(row.participantName),
+    [HEADERS[6]]: row.participantType,
+    [HEADERS[7]]: row.tshirtSize,
+    [HEADERS[8]]: row.childName ? sanitizeCell(row.childName) : "",
+    [HEADERS[9]]: formatDate(row.childDob),
+    [HEADERS[10]]: row.childGrade ? sanitizeCell(row.childGrade) : "",
+    [HEADERS[11]]: row.currentSchool ? sanitizeCell(row.currentSchool) : "",
+    [HEADERS[12]]: sanitizeCell(row.programName),
+    [HEADERS[13]]: sanitizeCell(
       [row.sessionLabel, row.sessionDateRange].filter(Boolean).join(" · ")
     ),
-    [HEADERS[11]]: row.rateType ? RATE_TYPE_LABEL[row.rateType] : "",
-    [HEADERS[12]]: row.rateType && row.sessionDateRange ? sanitizeCell(row.sessionDateRange) : "",
-    [HEADERS[13]]: row.unitCount ?? "",
-    [HEADERS[14]]: row.programLocation ? sanitizeCell(row.programLocation) : "",
-    [HEADERS[15]]: row.amount,
-    [HEADERS[16]]: PAYMENT_METHOD_LABEL[row.paymentMethod] ?? row.paymentMethod,
-    [HEADERS[17]]:
+    [HEADERS[14]]: row.rateType ? RATE_TYPE_LABEL[row.rateType] : "",
+    [HEADERS[15]]: row.rateType && row.sessionDateRange ? sanitizeCell(row.sessionDateRange) : "",
+    [HEADERS[16]]: row.unitCount ?? "",
+    [HEADERS[17]]: row.programLocation ? sanitizeCell(row.programLocation) : "",
+    [HEADERS[18]]: row.amount,
+    [HEADERS[19]]: PAYMENT_METHOD_LABEL[row.paymentMethod] ?? row.paymentMethod,
+    [HEADERS[20]]:
       row.registrationStatus === "interested"
         ? "No Payment Required"
         : row.paymentMethod === "cash"
@@ -144,20 +150,20 @@ export async function GET(request: Request) {
               ? "Step Up Received"
               : "Step Up Payment Due"
             : row.paymentStatus,
-    [HEADERS[18]]: REGISTRATION_STATUS_LABEL[row.registrationStatus] ?? row.registrationStatus,
-    [HEADERS[19]]: row.cancellationStatus,
-    [HEADERS[20]]: row.preferredResolution ? RESOLUTION_LABEL[row.preferredResolution] : "",
-    [HEADERS[21]]: row.cancellationReason ? sanitizeCell(row.cancellationReason) : "",
-    [HEADERS[22]]: formatDateTime(row.requestDate),
-    [HEADERS[23]]: row.schoolLocation ? sanitizeCell(row.schoolLocation) : "",
-    [HEADERS[24]]: row.familyInterestedPrograms.length > 0 ? sanitizeCell(row.familyInterestedPrograms.join(", ")) : "",
-    [HEADERS[25]]: row.interestedInCoaching ? "Yes" : "No",
-    [HEADERS[26]]: row.interestedInVolunteering ? "Yes" : "No",
-    [HEADERS[27]]: row.interestedInSponsorship ? "Yes" : "No",
-    [HEADERS[28]]: row.paymentMethod === "cash" ? (row.cashCollectedAt ? "Yes" : "No") : "N/A",
-    [HEADERS[29]]: formatDateTime(row.cashCollectedAt),
-    [HEADERS[30]]: row.paymentMethod === "step_up" ? (row.stepUpReceivedAt ? "Yes" : "No") : "N/A",
-    [HEADERS[31]]: formatDateTime(row.stepUpReceivedAt),
+    [HEADERS[21]]: REGISTRATION_STATUS_LABEL[row.registrationStatus] ?? row.registrationStatus,
+    [HEADERS[22]]: row.cancellationStatus,
+    [HEADERS[23]]: row.preferredResolution ? RESOLUTION_LABEL[row.preferredResolution] : "",
+    [HEADERS[24]]: row.cancellationReason ? sanitizeCell(row.cancellationReason) : "",
+    [HEADERS[25]]: formatDateTime(row.requestDate),
+    [HEADERS[26]]: row.schoolLocation ? sanitizeCell(row.schoolLocation) : "",
+    [HEADERS[27]]: row.familyInterestedPrograms.length > 0 ? sanitizeCell(row.familyInterestedPrograms.join(", ")) : "",
+    [HEADERS[28]]: row.interestedInCoaching ? "Yes" : "No",
+    [HEADERS[29]]: row.interestedInVolunteering ? "Yes" : "No",
+    [HEADERS[30]]: row.interestedInSponsorship ? "Yes" : "No",
+    [HEADERS[31]]: row.paymentMethod === "cash" ? (row.cashCollectedAt ? "Yes" : "No") : "N/A",
+    [HEADERS[32]]: formatDateTime(row.cashCollectedAt),
+    [HEADERS[33]]: row.paymentMethod === "step_up" ? (row.stepUpReceivedAt ? "Yes" : "No") : "N/A",
+    [HEADERS[34]]: formatDateTime(row.stepUpReceivedAt),
   }));
 
   const worksheet =

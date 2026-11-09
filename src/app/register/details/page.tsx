@@ -17,13 +17,10 @@ import {
 } from "@/components/ui/select";
 import { programs } from "@/data/programs";
 import { OTHER_SCHOOL_VALUE, SCHOOL_SELECT_OPTIONS } from "@/data/schools";
+import { resolveParticipant, type ResolvedParticipant } from "@/lib/participants";
 import type { Program } from "@/types";
 
-interface Participant {
-  id: string;
-  name: string;
-  meta: string;
-}
+type Participant = ResolvedParticipant;
 
 /**
  * draft.schoolSelections stores the resolved label (e.g. "Lakeview Elementary"),
@@ -51,11 +48,7 @@ export default function DetailsPage() {
   const participants: Participant[] = useMemo(() => {
     if (!user || !family) return [];
     return draft.participantIds
-      .map((id): Participant | null => {
-        if (id === "self") return { id: "self", name: user.name, meta: "Myself" };
-        const child = family.children.find((c) => c.id === id);
-        return child ? { id: child.id, name: `${child.firstName} ${child.lastName}`, meta: child.grade } : null;
-      })
+      .map((id) => resolveParticipant(id, user, family))
       .filter((p): p is Participant => p !== null);
   }, [draft.participantIds, user, family]);
 

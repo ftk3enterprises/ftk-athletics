@@ -12,7 +12,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { OTHER_SCHOOL_VALUE, SCHOOL_SELECT_OPTIONS } from "@/data/schools";
-import type { Child } from "@/types";
+import { TSHIRT_SIZE_OPTIONS } from "@/data/tshirt-sizes";
+import type { Child, TShirtSize } from "@/types";
 
 type ChildInput = {
   firstName: string;
@@ -20,6 +21,7 @@ type ChildInput = {
   dob: string;
   grade: string;
   school: string;
+  tshirtSize: TShirtSize;
 };
 
 /** The stored school is either a known label, a custom "other" name, or empty — resolve which Select option (if any) should show as active. */
@@ -36,7 +38,7 @@ export function ChildForm({
   onSave,
   onCancel,
 }: {
-  initial?: Pick<Child, "firstName" | "lastName" | "dob" | "grade" | "school">;
+  initial?: Pick<Child, "firstName" | "lastName" | "dob" | "grade" | "school" | "tshirtSize">;
   onSave: (input: ChildInput) => Promise<void>;
   onCancel: () => void;
 }) {
@@ -47,6 +49,7 @@ export function ChildForm({
   const [customSchool, setCustomSchool] = useState(() =>
     selectCode === OTHER_SCHOOL_VALUE ? initial?.school ?? "" : ""
   );
+  const [tshirtSize, setTshirtSize] = useState<TShirtSize | "">(initial?.tshirtSize ?? "");
 
   const resolvedSchool =
     selectCode === OTHER_SCHOOL_VALUE
@@ -55,6 +58,7 @@ export function ChildForm({
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (!tshirtSize) return;
     setIsSubmitting(true);
     const data = new FormData(e.currentTarget);
     await onSave({
@@ -63,6 +67,7 @@ export function ChildForm({
       dob: String(data.get("dob") ?? ""),
       grade: String(data.get("grade") ?? ""),
       school: resolvedSchool,
+      tshirtSize,
     });
     setIsSubmitting(false);
   }
@@ -114,10 +119,27 @@ export function ChildForm({
           />
         )}
       </div>
+      <div className="space-y-1.5 sm:col-span-2">
+        <Label htmlFor="tshirtSize">T-Shirt Size</Label>
+        <Select value={tshirtSize} onValueChange={(value) => setTshirtSize((value as TShirtSize) ?? "")}>
+          <SelectTrigger id="tshirtSize" className="h-10 w-full">
+            <SelectValue placeholder="Select a T-shirt size">
+              {(value: string | null) => TSHIRT_SIZE_OPTIONS.find((s) => s.value === value)?.label ?? ""}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            {TSHIRT_SIZE_OPTIONS.map((size) => (
+              <SelectItem key={size.value} value={size.value}>
+                {size.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
       <div className="flex gap-2 sm:col-span-2">
         <Button
           type="submit"
-          disabled={isSubmitting || !resolvedSchool}
+          disabled={isSubmitting || !resolvedSchool || !tshirtSize}
           className="rounded-sm bg-navy font-heading hover:bg-navy/90"
         >
           {isSubmitting ? "Saving..." : "Save Child"}

@@ -11,6 +11,7 @@ import { programs } from "@/data/programs";
 import * as registrationService from "@/services/registration-service";
 import { formatSelectedDatesLabel, formatSelectedWeeksLabel } from "@/lib/schedule-dates";
 import { calculateSessionPrice, resolveSelectedWeeks } from "@/lib/pricing";
+import { resolveParticipant } from "@/lib/participants";
 import type { ProgramWeek } from "@/types";
 
 interface Line {
@@ -41,13 +42,7 @@ export default function ReviewPage() {
     if (!user || !family) return [];
     const result: Line[] = [];
     for (const participantId of draft.participantIds) {
-      const participantName =
-        participantId === "self"
-          ? user.name
-          : (() => {
-              const child = family.children.find((c) => c.id === participantId);
-              return child ? `${child.firstName} ${child.lastName}` : "Participant";
-            })();
+      const participantName = resolveParticipant(participantId, user, family)?.name ?? "Participant";
       for (const programId of draft.assignments[participantId] ?? []) {
         const program = programs.find((p) => p.id === programId);
         if (!program) continue;

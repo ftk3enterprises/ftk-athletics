@@ -24,6 +24,7 @@ interface RegistrationRow {
   program_id: string;
   participant_id: string;
   participant_name: string;
+  tshirt_size: Registration["tshirtSize"];
   session_id: string;
   session_label: string;
   session_date_range: string | null;
@@ -48,6 +49,7 @@ function toRegistration(row: RegistrationRow): Registration {
     programId: row.program_id,
     participantId: row.participant_id,
     participantName: row.participant_name,
+    tshirtSize: row.tshirt_size ?? null,
     sessionId: row.session_id,
     sessionLabel: row.session_label,
     sessionDateRange: row.session_date_range,
@@ -105,7 +107,7 @@ export async function POST(request: NextRequest) {
 
   const { data: family, error: familyError } = await supabase
     .from("families")
-    .select("id, waiver_accepted, waiver_accepted_at")
+    .select("id, waiver_accepted, waiver_accepted_at, tshirt_size")
     .eq("user_id", user.id)
     .maybeSingle();
   if (familyError) {
@@ -119,13 +121,23 @@ export async function POST(request: NextRequest) {
 
   const { data: children, error: childrenError } = await supabase
     .from("children")
-    .select("id, first_name, last_name")
+    .select("id, first_name, last_name, tshirt_size")
     .eq("family_id", family.id);
   if (childrenError) {
     console.error("registrations: children lookup failed", childrenError);
     return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });
   }
   const childById = new Map((children ?? []).map((c) => [c.id as string, c]));
+
+  const { data: adults, error: adultsError } = await supabase
+    .from("family_adults")
+    .select("id, first_name, last_name, tshirt_size")
+    .eq("family_id", family.id);
+  if (adultsError) {
+    console.error("registrations: family_adults lookup failed", adultsError);
+    return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });
+  }
+  const adultById = new Map((adults ?? []).map((a) => [a.id as string, a]));
 
   const userName =
     (user.user_metadata?.name as string | undefined) ??
@@ -167,6 +179,7 @@ export async function POST(request: NextRequest) {
     program_id: string;
     participant_id: string;
     participant_name: string;
+    tshirt_size: Registration["tshirtSize"];
     session_id: string;
     session_label: string;
     session_date_range: string | null;
@@ -188,14 +201,28 @@ export async function POST(request: NextRequest) {
     }
 
     let participantName: string;
+    let tshirtSize: Registration["tshirtSize"];
     if (participantId === user.id) {
       participantName = userName;
+      tshirtSize = (family.tshirt_size as Registration["tshirtSize"]) ?? null;
     } else {
       const child = childById.get(participantId);
-      if (!child) {
+      const adult = adultById.get(participantId);
+      if (child) {
+        participantName = `${child.first_name} ${child.last_name}`;
+        tshirtSize = (child.tshirt_size as Registration["tshirtSize"]) ?? null;
+      } else if (adult) {
+        participantName = `${adult.first_name} ${adult.last_name}`;
+        tshirtSize = (adult.tshirt_size as Registration["tshirtSize"]) ?? null;
+      } else {
         return NextResponse.json({ error: "Participant not found on this family." }, { status: 403 });
       }
-      participantName = `${child.first_name} ${child.last_name}`;
+    }
+    if (!tshirtSize) {
+      return NextResponse.json(
+        { error: `A T-shirt size is required for ${participantName}.` },
+        { status: 400 }
+      );
     }
 
     const program = programs.find((p) => p.id === programId);
@@ -295,6 +322,7 @@ export async function POST(request: NextRequest) {
       program_id: program.id,
       participant_id: participantId,
       participant_name: participantName,
+      tshirt_size: tshirtSize,
       session_id: session.id,
       session_label: session.label,
       session_date_range: sessionDateRange,

@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { programs } from "@/data/programs";
 import { LIABILITY_WAIVER_TEXT } from "@/data/config";
+import { resolveParticipant } from "@/lib/participants";
 import * as waiverService from "@/services/waiver-service";
 
 export default function WaiverPage() {
@@ -29,9 +30,7 @@ export default function WaiverPage() {
 
   const participantNames = useMemo(() => {
     if (!user || !family) return [];
-    return draft.participantIds.map((id) =>
-      id === "self" ? user.name : family.children.find((c) => c.id === id)?.firstName ?? "Participant"
-    );
+    return draft.participantIds.map((id) => resolveParticipant(id, user, family)?.name ?? "Participant");
   }, [draft.participantIds, user, family]);
 
   const programNames = useMemo(

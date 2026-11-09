@@ -5,7 +5,8 @@ import { Pencil, Plus, Trash2, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ChildForm } from "@/components/profile/child-form";
 import * as profileService from "@/services/profile-service";
-import type { Child } from "@/types";
+import { getTshirtSizeLabel } from "@/data/tshirt-sizes";
+import type { Child, TShirtSize } from "@/types";
 
 export function ChildrenManager({
   familyId,
@@ -26,6 +27,7 @@ export function ChildrenManager({
     dob: string;
     grade: string;
     school: string;
+    tshirtSize: TShirtSize;
   }) {
     await profileService.addChild(familyId, input);
     await onChanged();
@@ -34,7 +36,7 @@ export function ChildrenManager({
 
   async function handleEdit(
     childId: string,
-    input: { firstName: string; lastName: string; dob: string; grade: string; school: string }
+    input: { firstName: string; lastName: string; dob: string; grade: string; school: string; tshirtSize: TShirtSize }
   ) {
     await profileService.updateChild(familyId, childId, input);
     await onChanged();
@@ -77,6 +79,7 @@ export function ChildrenManager({
                 <p className="text-sm text-muted-foreground">
                   {child.grade}
                   {child.school ? ` · ${child.school}` : ""} · DOB {child.dob}
+                  {child.tshirtSize ? ` · ${getTshirtSizeLabel(child.tshirtSize)}` : ""}
                 </p>
               </div>
             </div>

@@ -7,6 +7,7 @@ interface RegistrationRow {
   program_id: string;
   participant_id: string;
   participant_name: string;
+  tshirt_size: Registration["tshirtSize"];
   session_id: string;
   session_label: string;
   session_date_range: string | null;
@@ -31,6 +32,7 @@ function toRegistration(row: RegistrationRow): Registration {
     programId: row.program_id,
     participantId: row.participant_id,
     participantName: row.participant_name,
+    tshirtSize: row.tshirt_size ?? null,
     sessionId: row.session_id,
     sessionLabel: row.session_label,
     sessionDateRange: row.session_date_range,

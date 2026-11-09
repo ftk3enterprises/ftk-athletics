@@ -17,23 +17,18 @@ import { Button } from "@/components/ui/button";
 import { programs } from "@/data/programs";
 import { formatProgramPriceDisplay } from "@/lib/pricing";
 import * as registrationService from "@/services/registration-service";
+import { resolveParticipant, type ParticipantKind, type ResolvedParticipant } from "@/lib/participants";
 import type { Program, ProgramSession, Registration } from "@/types";
 
 function isDateSelectionComplete(value: DateSelectionValue | undefined): boolean {
   return Boolean(value && ((value.dates?.length ?? 0) > 0 || (value.weekIds?.length ?? 0) > 0));
 }
 
-interface Participant {
-  id: string;
-  resolvedId: string;
-  name: string;
-  meta: string;
-  kind: "self" | "child";
-}
+type Participant = ResolvedParticipant;
 
-function isCompatible(program: Program, kind: "self" | "child") {
+function isCompatible(program: Program, kind: ParticipantKind) {
   if (program.participantType === "family") return true;
-  return kind === "self" ? program.participantType === "adult" : program.participantType === "youth";
+  return kind === "child" ? program.participantType === "youth" : program.participantType === "adult";
 }
 
 export default function SchedulePage() {
@@ -87,13 +82,7 @@ export default function SchedulePage() {
   const participants: Participant[] = useMemo(() => {
     if (!user || !family) return [];
     return draft.participantIds
-      .map((id): Participant | null => {
-        if (id === "self") return { id: "self", resolvedId: user.id, name: user.name, meta: "Myself", kind: "self" };
-        const child = family.children.find((c) => c.id === id);
-        return child
-          ? { id: child.id, resolvedId: child.id, name: `${child.firstName} ${child.lastName}`, meta: child.grade, kind: "child" }
-          : null;
-      })
+      .map((id) => resolveParticipant(id, user, family))
       .filter((p): p is Participant => p !== null);
   }, [draft.participantIds, user, family]);
 

@@ -32,7 +32,9 @@ export function RegisterEntryClient({
     if (program && programSeeded) seedProgram(program.id);
 
     const participantIsValid =
-      participantId === "self" || family.children.some((c) => c.id === participantId);
+      participantId === "self" ||
+      family.children.some((c) => c.id === participantId) ||
+      family.adults.some((a) => a.id === participantId);
     if (participantId && participantIsValid) {
       seedParticipant(participantId);
       if (programSeeded) seedAssignment(participantId, program!.id);

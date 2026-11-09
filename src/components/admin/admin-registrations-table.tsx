@@ -404,7 +404,13 @@ export function AdminRegistrationsTable({ rows }: { rows: AdminRegistrationRow[]
                   className={row.cancellationRequested ? "bg-amber-50" : undefined}
                 >
                   <TableCell className="font-medium text-navy">{row.parentName}</TableCell>
-                  <TableCell>{row.participantName}</TableCell>
+                  <TableCell>
+                    {row.participantName}
+                    <span className="block text-xs text-muted-foreground">
+                      {row.participantType}
+                      {row.tshirtSize ? ` · ${row.tshirtSize}` : ""}
+                    </span>
+                  </TableCell>
                   <TableCell>{row.programName}</TableCell>
                   <TableCell className="whitespace-normal">
                     <span className="flex items-center gap-1.5 text-navy">
@@ -489,6 +495,8 @@ export function AdminRegistrationsTable({ rows }: { rows: AdminRegistrationRow[]
                 <DetailRow label="Parent Email" value={detailsRow.parentEmail} />
                 <DetailRow label="Parent Phone" value={detailsRow.parentPhone} />
                 <DetailRow label="Participant" value={detailsRow.participantName} />
+                <DetailRow label="Participant Type" value={detailsRow.participantType} />
+                <DetailRow label="T-Shirt Size" value={detailsRow.tshirtSize} />
                 <DetailRow label="Child's School" value={detailsRow.childSchool ?? ""} />
                 <DetailRow label="Child's Grade" value={detailsRow.childGrade ?? ""} />
                 <DetailRow label="Program" value={detailsRow.programName} />

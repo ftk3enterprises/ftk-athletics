@@ -182,6 +182,20 @@ export interface User {
   createdAt: string;
 }
 
+export type TShirtSize =
+  | "youth-xs"
+  | "youth-s"
+  | "youth-m"
+  | "youth-l"
+  | "youth-xl"
+  | "adult-xs"
+  | "adult-s"
+  | "adult-m"
+  | "adult-l"
+  | "adult-xl"
+  | "adult-2xl"
+  | "adult-3xl";
+
 export interface Child {
   id: string;
   familyId: string;
@@ -191,6 +205,17 @@ export interface Child {
   grade: string;
   /** The child's current school, entered as free text by the parent. */
   school: string;
+  /** Null only for children added before this field existed. */
+  tshirtSize: TShirtSize | null;
+}
+
+/** A second adult registrable under a family account (spouse, grandparent, etc.) — sibling to Child, for adult leagues and family events. */
+export interface FamilyAdult {
+  id: string;
+  familyId: string;
+  firstName: string;
+  lastName: string;
+  tshirtSize: TShirtSize | null;
 }
 
 /**
@@ -226,7 +251,11 @@ export interface Family {
   email: string;
   phone: string;
   children: Child[];
+  /** Additional adults registered under this family account — the signed-in account holder ("self") is not included here, see Family.tshirtSize. */
+  adults: FamilyAdult[];
   waiver: Waiver;
+  /** The signed-in account holder's own T-shirt size — null until set. */
+  tshirtSize: TShirtSize | null;
   /** Program ids the family flagged as interested in during profile setup. */
   interestedProgramIds: string[];
   /** Optional involvement preferences, set at profile setup and editable later from My Profile. */
@@ -268,8 +297,10 @@ export interface Registration {
   id: string;
   familyId: string;
   programId: string;
-  participantId: string; // Child id, or the user id when participantType === "adult"
+  participantId: string; // Child id, FamilyAdult id, or the user id when registering "self"
   participantName: string;
+  /** Snapshot of the participant's T-shirt size at registration time — null only for registrations created before this field existed. */
+  tshirtSize: TShirtSize | null;
   /** The specific session/week/month this registration is for — never just the program. */
   sessionId: string;
   /** Denormalized session label/date range at time of purchase, so history reads correctly even if session data changes later. */

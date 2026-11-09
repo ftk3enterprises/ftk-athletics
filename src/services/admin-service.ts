@@ -1,7 +1,11 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getProgramBySlug, programs } from "@/data/programs";
-import type { CancellationResolution, PaymentStatus, RegistrationPaymentMethod } from "@/types";
+import { getTshirtSizeLabel } from "@/data/tshirt-sizes";
+import type { CancellationResolution, PaymentStatus, RegistrationPaymentMethod, TShirtSize } from "@/types";
+
+/** Who a registration's participant_id actually resolves to — drives the "Participant Type" column in the dashboard and export. */
+export type AdminParticipantType = "Parent/Guardian" | "Child" | "Adult Family Member";
 
 export interface AdminRegistrationRow {
   registrationId: string;
@@ -9,6 +13,8 @@ export interface AdminRegistrationRow {
   parentEmail: string;
   parentPhone: string;
   participantName: string;
+  participantType: AdminParticipantType;
+  tshirtSize: string;
   childSchool: string | null;
   childGrade: string | null;
   programName: string;
@@ -41,6 +47,17 @@ function getProgramById(programId: string) {
   return programs.find((p) => p.id === programId) ?? getProgramBySlug(programId);
 }
 
+/** Classifies a registration's participant_id against the children/family_adults lookups built per-query below — whatever's left over is the account holder ("self"). */
+function resolveParticipantType(
+  participantId: string,
+  childById: Map<string, unknown>,
+  adultById: Map<string, unknown>
+): AdminParticipantType {
+  if (childById.has(participantId)) return "Child";
+  if (adultById.has(participantId)) return "Adult Family Member";
+  return "Parent/Guardian";
+}
+
 /**
  * Read-only, joined view for the Phase 1 admin screen. Uses the service-role
  * client (bypasses RLS) because this needs to see every family's
@@ -66,6 +83,13 @@ export async function listAdminRegistrations(): Promise<AdminRegistrationRow[]> 
     .in("id", participantIds);
   if (childrenError) throw new Error(childrenError.message);
   const childById = new Map((children ?? []).map((c) => [c.id as string, c]));
+
+  const { data: adults, error: adultsError } = await supabase
+    .from("family_adults")
+    .select("id")
+    .in("id", participantIds);
+  if (adultsError) throw new Error(adultsError.message);
+  const adultById = new Map((adults ?? []).map((a) => [a.id as string, a]));
 
   const paymentIds = registrations
     .map((r) => r.payment_id as string | null)
@@ -114,6 +138,8 @@ export async function listAdminRegistrations(): Promise<AdminRegistrationRow[]> 
       parentEmail: family?.email ?? "",
       parentPhone: family?.phone ?? "",
       participantName: registration.participant_name as string,
+      participantType: resolveParticipantType(registration.participant_id as string, childById, adultById),
+      tshirtSize: getTshirtSizeLabel(registration.tshirt_size as TShirtSize | null),
       childSchool: child?.school ?? null,
       childGrade: child?.grade ?? null,
       programName: program?.name ?? (registration.program_id as string),
@@ -149,6 +175,9 @@ export interface AdminExportRow {
   parentName: string;
   parentEmail: string;
   parentPhone: string;
+  participantName: string;
+  participantType: AdminParticipantType;
+  tshirtSize: string;
   childName: string | null;
   childDob: string | null;
   childGrade: string | null;
@@ -203,6 +232,13 @@ export async function listAdminExportRows(): Promise<AdminExportRow[]> {
   if (childrenError) throw new Error(childrenError.message);
   const childById = new Map((children ?? []).map((c) => [c.id as string, c]));
 
+  const { data: adults, error: adultsError } = await supabase
+    .from("family_adults")
+    .select("id")
+    .in("id", participantIds);
+  if (adultsError) throw new Error(adultsError.message);
+  const adultById = new Map((adults ?? []).map((a) => [a.id as string, a]));
+
   const paymentIds = registrations
     .map((r) => r.payment_id as string | null)
     .filter((id): id is string => Boolean(id));
@@ -251,6 +287,9 @@ export async function listAdminExportRows(): Promise<AdminExportRow[]> {
       parentName: family?.parent_name ?? "Unknown",
       parentEmail: family?.email ?? "",
       parentPhone: family?.phone ?? "",
+      participantName: registration.participant_name as string,
+      participantType: resolveParticipantType(registration.participant_id as string, childById, adultById),
+      tshirtSize: getTshirtSizeLabel(registration.tshirt_size as TShirtSize | null),
       childName: child ? `${child.first_name} ${child.last_name}` : null,
       childDob: child?.dob ?? null,
       childGrade: child?.grade ?? null,

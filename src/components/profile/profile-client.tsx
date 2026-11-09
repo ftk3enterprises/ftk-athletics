@@ -6,6 +6,7 @@ import { CheckCircle2, ShieldAlert } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { CreateFamilyForm } from "@/components/profile/create-family-form";
 import { ChildrenManager } from "@/components/profile/children-manager";
+import { AdultsManager } from "@/components/profile/adults-manager";
 import { RegistrationsList } from "@/components/profile/registrations-list";
 import { WaiverReviewForm } from "@/components/profile/waiver-review-form";
 import { Button } from "@/components/ui/button";
@@ -198,6 +199,17 @@ export function ProfileClient({ redirectTo }: { redirectTo?: string }) {
             <ChildrenManager
               familyId={family.id}
               familyChildren={family.children}
+              onChanged={refreshFamily}
+            />
+          </div>
+        </section>
+
+        <section>
+          <h2 className="text-2xl">Adults</h2>
+          <div className="mt-4">
+            <AdultsManager
+              familyId={family.id}
+              familyAdults={family.adults}
               onChanged={refreshFamily}
             />
           </div>
