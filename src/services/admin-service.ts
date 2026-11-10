@@ -72,6 +72,17 @@ export async function listAdminRegistrations(): Promise<AdminRegistrationRow[]> 
     .select(
       "*, families(parent_name, email, phone, interested_program_ids, interested_coaching, interested_volunteering, interested_sponsorship)"
     )
+    // Excludes abandoned card checkouts: a registration that's still
+    // pending_payment with payment_method "online" means the family never
+    // finished Stripe checkout (confirmPayment in the webhook is the only
+    // thing that ever moves it to "confirmed") — it never really happened,
+    // so it shouldn't clutter the admin view. step_up/cash registrations
+    // stay visible while pending because those genuinely need an admin to
+    // follow up and collect/confirm them. This never touches what a family
+    // sees on their own My Profile / My Registrations page (see
+    // registration-service.ts's listRegistrationsByFamily, which has no
+    // such filter).
+    .or("status.neq.pending_payment,payment_method.neq.online")
     .order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
   if (!registrations || registrations.length === 0) return [];
@@ -220,6 +231,10 @@ export async function listAdminExportRows(): Promise<AdminExportRow[]> {
     .select(
       "*, families(parent_name, email, phone, interested_program_ids, interested_coaching, interested_volunteering, interested_sponsorship)"
     )
+    // See the matching filter + comment in listAdminRegistrations above —
+    // same rule, kept in sync so the Excel export never shows a row the
+    // dashboard itself hides.
+    .or("status.neq.pending_payment,payment_method.neq.online")
     .order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
   if (!registrations || registrations.length === 0) return [];
